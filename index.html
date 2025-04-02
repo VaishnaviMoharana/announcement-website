@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Announcements</title>
+</head>
+<body>
+    <h2>Live Announcements</h2>
+    <button id="startLive">Start Live Announcement</button>
+    <button id="stopLive" disabled>Stop Live Announcement</button>
+
+    <h2>Recorded Announcements</h2>
+    <button id="startRecord">Start Recording</button>
+    <button id="stopRecord" disabled>Stop Recording</button>
+    <audio id="audioPlayback" controls></audio>
+    
+    <script>
+        let mediaRecorder, audioChunks = [];
+
+        document.getElementById("startLive").addEventListener("click", async () => {
+            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            let audio = new Audio();
+            audio.srcObject = stream;
+            audio.play();
+        });
+
+        document.getElementById("startRecord").addEventListener("click", async () => {
+            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                let audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+                let audioUrl = URL.createObjectURL(audioBlob);
+                document.getElementById("audioPlayback").src = audioUrl;
+            };
+
+            mediaRecorder.start();
+            document.getElementById("stopRecord").disabled = false;
+        });
+
+        document.getElementById("stopRecord").addEventListener("click", () => {
+            mediaRecorder.stop();
+            document.getElementById("stopRecord").disabled = true;
+        });
+    </script>
+</body>
+</html>
