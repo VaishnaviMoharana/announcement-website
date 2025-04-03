@@ -17,36 +17,70 @@
     
     <script>
         let mediaRecorder, audioChunks = [];
+        let liveStream = null; // Store the live stream
+        
+        async function requestMicAccess() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                return stream;
+            } catch (error) {
+                alert("Microphone access denied. Please allow microphone permissions in your browser settings.");
+                console.error(error);
+                return null;
+            }
+        }
 
         document.getElementById("startLive").addEventListener("click", async () => {
-            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            let audio = new Audio();
-            audio.srcObject = stream;
-            audio.play();
+            if (liveStream) return; // Prevent multiple live streams
+
+            liveStream = await requestMicAccess();
+            if (liveStream) {
+                let audio = new Audio();
+                audio.srcObject = liveStream;
+                audio.play();
+                document.getElementById("stopLive").disabled = false;
+            }
+        });
+
+        document.getElementById("stopLive").addEventListener("click", () => {
+            if (liveStream) {
+                liveStream.getTracks().forEach(track => track.stop()); // Stop the microphone
+                liveStream = null;
+                document.getElementById("stopLive").disabled = true;
+            }
         });
 
         document.getElementById("startRecord").addEventListener("click", async () => {
-            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
+            if (mediaRecorder) return; // Prevent multiple recordings
 
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
+            let stream = await requestMicAccess();
+            if (stream) {
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
 
-            mediaRecorder.onstop = () => {
-                let audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
-                let audioUrl = URL.createObjectURL(audioBlob);
-                document.getElementById("audioPlayback").src = audioUrl;
-            };
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
 
-            mediaRecorder.start();
-            document.getElementById("stopRecord").disabled = false;
+                mediaRecorder.onstop = () => {
+                    let audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+                    let audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById("audioPlayback").src = audioUrl;
+                    mediaRecorder = null; // Reset mediaRecorder
+                };
+
+                mediaRecorder.start();
+                document.getElementById("stopRecord").disabled = false;
+                document.getElementById("startRecord").disabled = true;
+            }
         });
 
         document.getElementById("stopRecord").addEventListener("click", () => {
-            mediaRecorder.stop();
-            document.getElementById("stopRecord").disabled = true;
+            if (mediaRecorder) {
+                mediaRecorder.stop();
+                document.getElementById("stopRecord").disabled = true;
+                document.getElementById("startRecord").disabled = false;
+            }
         });
     </script>
 </body>
