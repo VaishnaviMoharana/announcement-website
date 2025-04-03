@@ -6,59 +6,77 @@
   <title>Live Announcements</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      background-color: #eef2f7;
+    /* Basic reset and font */
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
       color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Header and container */
+    header {
+      background: #007bff;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     .container {
-      max-width: 800px;
-      margin: 20px auto;
+      max-width: 900px;
       background: #fff;
-      padding: 20px;
       border-radius: 10px;
+      margin: 20px auto;
+      padding: 20px 30px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      flex: 1;
     }
-    header {
-      background-color: #007bff;
-      padding: 15px;
-      border-radius: 10px 10px 0 0;
-      color: #fff;
-      text-align: center;
-    }
-    h2, h3 {
-      margin-top: 20px;
+    h2 {
+      margin-bottom: 10px;
       color: #444;
     }
+    h3 {
+      margin: 20px 0 10px;
+      color: #555;
+    }
+    /* Buttons and inputs */
     button {
-      background-color: #007bff;
+      background: #007bff;
       color: #fff;
       border: none;
       padding: 10px 20px;
-      margin: 10px 5px 10px 0;
+      margin: 8px 5px 8px 0;
       border-radius: 5px;
       cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    button:disabled {
-      background-color: #aaa;
-      cursor: not-allowed;
+      transition: background 0.3s ease, transform 0.2s ease;
     }
     button:hover:not(:disabled) {
-      background-color: #0056b3;
+      background: #0056b3;
+      transform: translateY(-2px);
     }
-    audio {
-      width: 100%;
-      margin: 10px 0;
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
     }
-    select {
+    select, input[type="text"] {
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 5px;
       margin-top: 10px;
+      width: 100%;
     }
+    audio {
+      width: 100%;
+      margin: 10px 0;
+      outline: none;
+    }
+    /* Recordings list */
     ul {
       list-style: none;
       padding: 0;
@@ -75,40 +93,72 @@
     }
     li strong {
       flex: 1;
+      margin-right: 10px;
     }
     li button {
       margin: 0 3px;
-      padding: 5px 10px;
+      padding: 6px 10px;
+      font-size: 0.9em;
+    }
+    /* Notification area */
+    #notification {
+      background: #dff0d8;
+      border: 1px solid #d6e9c6;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      display: none;
+    }
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.1);
       font-size: 0.9em;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Live Announcements</h1>
+  </header>
   <div class="container">
-    <header>
-      <h1>Live Announcements</h1>
-    </header>
+    <div id="notification"></div>
     <section>
       <h2>Live Announcements</h2>
       <button id="startLive">Start Live Announcement</button>
       <button id="stopLive" disabled>Stop Live Announcement</button>
       <audio id="liveAudio" controls></audio>
     </section>
+    <hr />
     <section>
       <h2>Recorded Announcements</h2>
       <button id="startRecord">Start Recording</button>
       <button id="stopRecord" disabled>Stop Recording</button>
+      <button id="clearRecordings" style="background:#dc3545;">Clear All Recordings</button>
       <h3>Saved Recordings:</h3>
       <ul id="recordingList"></ul>
       <h3>Select Audio Output:</h3>
       <select id="audioOutputSelect"></select>
     </section>
   </div>
+  <footer>
+    &copy; 2025 Live Announcements. All rights reserved.
+  </footer>
 
   <script>
     let mediaRecorder, audioChunks = [];
     let liveStream = null;
     let recordings = JSON.parse(localStorage.getItem("recordings")) || [];
+
+    const notificationEl = document.getElementById("notification");
+    function notify(message, duration = 3000) {
+      notificationEl.textContent = message;
+      notificationEl.style.display = "block";
+      setTimeout(() => {
+        notificationEl.style.display = "none";
+      }, duration);
+    }
 
     async function requestMicAccess() {
       try {
@@ -139,12 +189,13 @@
         source.connect(gainNode);
         gainNode.connect(destination);
 
-        // Optional: Attach stream to the audio element for UI playback control
-        let audioElement = document.getElementById("liveAudio");
+        // Attach stream to the audio element for UI playback control
+        const audioElement = document.getElementById("liveAudio");
         audioElement.srcObject = liveStream;
         audioElement.play();
 
         document.getElementById("stopLive").disabled = false;
+        notify("Live announcement started.");
       }
     });
 
@@ -154,6 +205,7 @@
         liveStream.getTracks().forEach(track => track.stop());
         liveStream = null;
         document.getElementById("stopLive").disabled = true;
+        notify("Live announcement stopped.");
       }
     });
 
@@ -162,7 +214,7 @@
       console.log("Start Recording clicked");
       if (mediaRecorder) return;
 
-      let stream = await requestMicAccess();
+      const stream = await requestMicAccess();
       if (stream) {
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
@@ -172,8 +224,8 @@
         };
 
         mediaRecorder.onstop = () => {
-          let audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
-          let audioUrl = URL.createObjectURL(audioBlob);
+          const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+          const audioUrl = URL.createObjectURL(audioBlob);
           let fileName = prompt("Enter a name for your recording:", "Announcement");
           if (!fileName) fileName = "Unnamed";
 
@@ -181,11 +233,13 @@
           localStorage.setItem("recordings", JSON.stringify(recordings));
           updateRecordingList();
           mediaRecorder = null;
+          notify("Recording saved.");
         };
 
         mediaRecorder.start();
         document.getElementById("stopRecord").disabled = false;
         document.getElementById("startRecord").disabled = true;
+        notify("Recording started.");
       }
     });
 
@@ -195,14 +249,25 @@
         mediaRecorder.stop();
         document.getElementById("stopRecord").disabled = true;
         document.getElementById("startRecord").disabled = false;
+        notify("Recording stopped.");
+      }
+    });
+
+    // Clear All Recordings
+    document.getElementById("clearRecordings").addEventListener("click", () => {
+      if (confirm("Are you sure you want to clear all recordings?")) {
+        recordings = [];
+        localStorage.removeItem("recordings");
+        updateRecordingList();
+        notify("All recordings cleared.");
       }
     });
 
     function updateRecordingList() {
-      let list = document.getElementById("recordingList");
+      const list = document.getElementById("recordingList");
       list.innerHTML = "";
       recordings.forEach((rec, index) => {
-        let li = document.createElement("li");
+        const li = document.createElement("li");
         li.innerHTML = `
           <strong>${rec.name}</strong>
           <button onclick="playRecording(${index})">▶ Play</button>
@@ -215,10 +280,10 @@
 
     async function playRecording(index) {
       console.log(`Playing recording: ${recordings[index].name}`);
-      let selectedDeviceId = document.getElementById("audioOutputSelect").value;
-      let audio = new Audio(URL.createObjectURL(recordings[index].blob));
+      const selectedDeviceId = document.getElementById("audioOutputSelect").value;
+      const audio = new Audio(URL.createObjectURL(recordings[index].blob));
 
-      // 🔹 Force audio to play through selected speaker
+      // Force audio to play through selected speaker if supported
       if (typeof audio.setSinkId !== "undefined" && selectedDeviceId) {
         try {
           await audio.setSinkId(selectedDeviceId);
@@ -232,11 +297,12 @@
     }
 
     function renameRecording(index) {
-      let newName = prompt("Enter a new name for this recording:", recordings[index].name);
+      const newName = prompt("Enter a new name for this recording:", recordings[index].name);
       if (newName) {
         recordings[index].name = newName;
         localStorage.setItem("recordings", JSON.stringify(recordings));
         updateRecordingList();
+        notify("Recording renamed.");
       }
     }
 
@@ -244,13 +310,14 @@
       recordings.splice(index, 1);
       localStorage.setItem("recordings", JSON.stringify(recordings));
       updateRecordingList();
+      notify("Recording deleted.");
     }
 
-    // 🔹 Get and Set Audio Output Device
+    // Get and Set Audio Output Device
     async function getAudioOutputDevices() {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const speakers = devices.filter(device => device.kind === "audiooutput");
-      let select = document.getElementById("audioOutputSelect");
+      const select = document.getElementById("audioOutputSelect");
       select.innerHTML = speakers.map(device =>
         `<option value="${device.deviceId}">${device.label || "Unknown Output"}</option>`
       ).join("");
@@ -260,7 +327,7 @@
     }
 
     async function setAudioOutput(deviceId) {
-      let audioElement = new Audio();
+      const audioElement = new Audio();
       if (typeof audioElement.setSinkId !== "undefined") {
         try {
           await audioElement.setSinkId(deviceId);
