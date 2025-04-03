@@ -37,16 +37,36 @@
             }
         }
 
-        // 🔹 Live Announcement Feature
+        // 🔹 Live Announcement Feature (Modified)
         document.getElementById("startLive").addEventListener("click", async () => {
             console.log("Start Live Announcement clicked");
             if (liveStream) return;
 
             liveStream = await requestMicAccess();
             if (liveStream) {
+                // Create an AudioContext and a source from the liveStream
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(liveStream);
+                const destination = audioContext.destination;
+
+                // 🔥 Force audio to play on speaker using sinkId
+                if (audioContext.setSinkId) {
+                    try {
+                        await audioContext.setSinkId("default"); // Or use specific speaker device ID
+                        console.log("Routing audio to speaker.");
+                    } catch (err) {
+                        console.warn("Failed to set speaker output:", err);
+                    }
+                }
+
+                // Connect the source to the destination
+                source.connect(destination);
+
+                // Optional: Also attach stream to the audio element for UI playback control
                 let audioElement = document.getElementById("liveAudio");
                 audioElement.srcObject = liveStream;
                 audioElement.play();
+
                 document.getElementById("stopLive").disabled = false;
             }
         });
