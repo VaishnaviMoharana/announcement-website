@@ -6,54 +6,64 @@
   <title>Live Announcements</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    /* Base Reset & Typography */
+    /* Reset & Base Styles */
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; }
     body {
       font-family: 'Roboto', sans-serif;
-      min-height: 100vh;
       transition: background-color 0.3s, color 0.3s;
-    }
-    /* Light Theme */
-    body.light {
       background: linear-gradient(135deg, #74ebd5, #ACB6E5);
       color: #333;
+      display: flex;
+      flex-direction: column;
     }
-    /* Dark Theme */
     body.dark {
       background: #1e1e1e;
       color: #ddd;
     }
+    /* Header */
     header {
       background: #007bff;
       color: #fff;
       padding: 20px;
       text-align: center;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
       position: relative;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    header h1 {
+      font-size: 1.8em;
     }
     header button#themeToggle {
       position: absolute;
-      right: 20px;
       top: 20px;
+      right: 20px;
       background: rgba(255,255,255,0.3);
       border: none;
       padding: 5px 10px;
       border-radius: 5px;
       cursor: pointer;
+      transition: background 0.3s;
       color: #fff;
     }
+    header button#themeToggle:hover {
+      background: rgba(255,255,255,0.5);
+    }
+    /* Main Container */
     .container {
       max-width: 900px;
+      width: 95%;
       background: #fff;
-      border-radius: 10px;
       margin: 20px auto;
       padding: 20px 30px;
+      border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       transition: background 0.3s;
+      flex: 1;
     }
     body.dark .container {
       background: #2c2c2c;
     }
+    /* Tabs */
     .tabs {
       display: flex;
       border-bottom: 2px solid #ddd;
@@ -69,10 +79,15 @@
     }
     .tab:hover { background: #f0f0f0; }
     body.dark .tab:hover { background: #444; }
-    .tab.active { border-bottom: 3px solid #007bff; color: #007bff; }
+    .tab.active {
+      border-bottom: 3px solid #007bff;
+      color: #007bff;
+    }
+    /* Sections */
     section { display: none; }
     section.active { display: block; }
-    h2, h3 { margin-bottom: 10px; color: inherit; }
+    section h2, section h3 { margin-bottom: 10px; }
+    /* Buttons */
     button {
       background: #007bff;
       color: #fff;
@@ -87,7 +102,11 @@
       background: #0056b3;
       transform: translateY(-2px);
     }
-    button:disabled { background: #aaa; cursor: not-allowed; }
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    /* Inputs */
     select, input[type="range"] {
       padding: 8px;
       border: 1px solid #ccc;
@@ -95,8 +114,13 @@
       margin: 10px 0;
       width: 100%;
     }
-    audio { width: 100%; margin: 10px 0; outline: none; }
-    /* Canvas for waveform */
+    /* Audio Element */
+    audio {
+      width: 100%;
+      margin: 10px 0;
+      outline: none;
+    }
+    /* Canvas for Waveform */
     #waveform {
       width: 100%;
       height: 80px;
@@ -153,6 +177,12 @@
       z-index: 1000;
     }
     #notification.show { opacity: 1; }
+    /* Tooltip for Info */
+    .tooltip {
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 5px;
+    }
     /* Footer */
     footer {
       text-align: center;
@@ -186,6 +216,7 @@
       <audio id="liveAudio" controls></audio>
       <div id="volumeMeter"><div id="volumeLevel"></div></div>
       <canvas id="waveform"></canvas>
+      <div class="tooltip">Note: Only microphone input is recorded for privacy reasons.</div>
     </section>
     <!-- Recorded Section -->
     <section id="recorded">
@@ -250,7 +281,7 @@
       }
     }
 
-    // Setup Volume Meter & Waveform
+    // Setup Volume Meter & Waveform Visualization
     function setupAudioVisualization(stream) {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       sourceNode = audioContext.createMediaStreamSource(stream);
@@ -259,7 +290,7 @@
       dataArray = new Uint8Array(analyser.frequencyBinCount);
       gainNode = audioContext.createGain();
       
-      // Use sensitivity slider value
+      // Apply sensitivity from slider
       const sensitivity = document.getElementById("sensitivity").value;
       gainNode.gain.value = parseFloat(sensitivity);
       
@@ -267,7 +298,7 @@
       gainNode.connect(analyser);
       analyser.connect(audioContext.destination);
       
-      // Update volume meter every 100ms
+      // Volume Meter update
       meterInterval = setInterval(() => {
         analyser.getByteFrequencyData(dataArray);
         let sum = 0;
@@ -277,7 +308,7 @@
         document.getElementById("volumeLevel").style.width = percent + "%";
       }, 100);
       
-      // Waveform Drawing
+      // Waveform Drawing update
       waveformInterval = setInterval(drawWaveform, 100);
     }
     
@@ -286,7 +317,7 @@
       const width = canvas.width = canvas.clientWidth;
       const height = canvas.height = canvas.clientHeight;
       analyser.getByteTimeDomainData(dataArray);
-      canvasCtx.fillStyle = "#eee";
+      canvasCtx.fillStyle = bodyClass("dark") ? "#333" : "#eee";
       canvasCtx.fillRect(0, 0, width, height);
       canvasCtx.lineWidth = 2;
       canvasCtx.strokeStyle = "#007bff";
@@ -306,10 +337,13 @@
       canvasCtx.lineTo(width, height/2);
       canvasCtx.stroke();
     }
+    
+    function bodyClass(cls) {
+      return document.body.classList.contains(cls);
+    }
 
     // Live Announcement Feature with Visualization
     document.getElementById("startLive").addEventListener("click", async () => {
-      console.log("Start Live Announcement clicked");
       if (liveStream) return;
       liveStream = await requestMicAccess();
       if (liveStream) {
@@ -323,20 +357,18 @@
     });
 
     document.getElementById("stopLive").addEventListener("click", () => {
-      console.log("Stop Live Announcement clicked");
       if (liveStream) {
         liveStream.getTracks().forEach(track => track.stop());
         liveStream = null;
         clearInterval(meterInterval);
         clearInterval(waveformInterval);
-        showNotification("Live announcement stopped.");
         document.getElementById("stopLive").disabled = true;
+        showNotification("Live announcement stopped.");
       }
     });
 
     // Recording Feature
     document.getElementById("startRecord").addEventListener("click", async () => {
-      console.log("Start Recording clicked");
       if (mediaRecorder) return;
       const stream = await requestMicAccess();
       if (stream) {
@@ -362,7 +394,6 @@
     });
 
     document.getElementById("stopRecord").addEventListener("click", () => {
-      console.log("Stop Recording clicked");
       if (mediaRecorder) {
         mediaRecorder.stop();
         document.getElementById("stopRecord").disabled = true;
@@ -373,7 +404,7 @@
 
     // Clear Recordings
     document.getElementById("clearRecordings").addEventListener("click", () => {
-      if (confirm("Are you sure you want to clear all recordings?")) {
+      if (confirm("Clear all recordings?")) {
         recordings = [];
         localStorage.removeItem("recordings");
         updateRecordingList();
@@ -397,13 +428,11 @@
     }
 
     async function playRecording(index) {
-      console.log(`Playing recording: ${recordings[index].name}`);
       const selectedDeviceId = document.getElementById("audioOutputSelect").value;
       const audio = new Audio(URL.createObjectURL(recordings[index].blob));
       if (typeof audio.setSinkId !== "undefined" && selectedDeviceId) {
         try {
           await audio.setSinkId(selectedDeviceId);
-          console.log(`Playing on device: ${selectedDeviceId}`);
         } catch (err) {
           console.error("Error setting audio output:", err);
           alert("Your browser does not support changing audio output.");
@@ -429,7 +458,7 @@
       showNotification("Recording deleted.");
     }
 
-    // Get Audio Output Devices
+    // Audio Output Devices
     async function getAudioOutputDevices() {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const speakers = devices.filter(device => device.kind === "audiooutput");
@@ -445,7 +474,6 @@
       if (typeof audioElement.setSinkId !== "undefined") {
         try {
           await audioElement.setSinkId(deviceId);
-          console.log(`Audio output set to: ${deviceId}`);
         } catch (err) {
           console.error("Failed to set audio output:", err);
         }
