@@ -1,512 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Announcements</title>
-  <!-- Google Fonts for a modern look -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
-  <style>
-    /* Reset & Typography */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Roboto', sans-serif;
-      transition: background-color 0.3s, color 0.3s;
-      min-height: 100vh;
-      line-height: 1.6;
-    }
-    /* Light & Dark Themes */
-    body.light {
-      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
-      color: #333;
-    }
-    body.dark {
-      background: #1e1e1e;
-      color: #ddd;
-    }
-    /* Header */
-    header {
-      background: #007bff;
-      color: #fff;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      position: relative;
-    }
-    header button#themeToggle {
-      position: absolute;
-      right: 20px;
-      top: 20px;
-      background: rgba(255,255,255,0.3);
-      border: none;
-      padding: 5px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-      color: #fff;
-    }
-    /* Main Container */
-    .container {
-      max-width: 900px;
-      background: #fff;
-      border-radius: 10px;
-      margin: 20px auto;
-      padding: 20px 30px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: background 0.3s;
-    }
-    body.dark .container {
-      background: #2c2c2c;
-    }
-    /* Tabs */
-    .tabs {
-      display: flex;
-      border-bottom: 2px solid #ddd;
-      margin-bottom: 20px;
-    }
-    .tab {
-      flex: 1;
-      text-align: center;
-      padding: 12px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: background 0.3s;
-    }
-    .tab:hover { background: #f0f0f0; }
-    body.dark .tab:hover { background: #444; }
-    .tab.active { border-bottom: 3px solid #007bff; color: #007bff; }
-    section { display: none; }
-    section.active { display: block; }
-    /* Headings */
-    h2, h3 { margin-bottom: 10px; }
-    /* Buttons */
-    button {
-      background: #007bff;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      margin: 8px 5px 8px 0;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.3s, transform 0.2s;
-    }
-    button:hover:not(:disabled) {
-      background: #0056b3;
-      transform: translateY(-2px);
-    }
-    button:disabled { background: #aaa; cursor: not-allowed; }
-    /* Inputs & Selects */
-    select, input[type="range"] {
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      margin: 10px 0;
-      width: 100%;
-    }
-    /* Audio Element */
-    audio { width: 100%; margin: 10px 0; outline: none; }
-    /* Waveform Canvas */
-    #waveform {
-      width: 100%;
-      height: 80px;
-      background: #eee;
-      border-radius: 5px;
-      margin-top: 10px;
-    }
-    /* Volume Meter */
-    #volumeMeter {
-      width: 100%;
-      height: 20px;
-      background: #ddd;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-    #volumeLevel {
-      height: 100%;
-      width: 0%;
-      background: #28a745;
-      transition: width 0.1s;
-    }
-    /* Recordings List */
-    ul { list-style: none; padding: 0; }
-    li {
-      background: #f9f9f9;
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    body.dark li { background: #3c3c3c; }
-    li strong { flex: 1; margin-right: 10px; }
-    li button {
-      margin: 0 3px;
-      padding: 6px 10px;
-      font-size: 0.9em;
-    }
-    /* Toast Notification */
-    #notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #28a745;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 5px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s;
-      z-index: 1000;
-    }
-    #notification.show { opacity: 1; }
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.1);
-      font-size: 0.9em;
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Announcement System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 50%;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #ddd;
+            border-radius: 5px;
+        }
+        .tab.active {
+            background: #3498db;
+            color: white;
+        }
+        .content {
+            display: none;
+        }
+        .content.active {
+            display: block;
+        }
+        .theme-toggle {
+            margin: 10px;
+            padding: 5px 15px;
+            cursor: pointer;
+            border: none;
+            background: #3498db;
+            color: white;
+            border-radius: 5px;
+        }
+    </style>
 </head>
-<body class="light">
-  <header>
-    <h1>Live Announcements</h1>
-    <button id="themeToggle">Dark Mode</button>
-  </header>
-  <div class="container">
-    <!-- Toast Notification -->
-    <div id="notification"></div>
-    <!-- Tabs Navigation -->
-    <div class="tabs">
-      <div class="tab active" data-tab="live">Live</div>
-      <div class="tab" data-tab="recorded">Recorded</div>
+<body>
+    <button class="theme-toggle">Toggle Theme</button>
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" data-target="live">Live Announcement</div>
+            <div class="tab" data-target="recorded">Recorded Announcement</div>
+        </div>
+        
+        <div id="live" class="content active">
+            <h2>Live Announcement</h2>
+            <textarea id="live-text" rows="4" cols="50" placeholder="Type your announcement..."></textarea>
+            <br>
+            <button onclick="speakLive()">Announce</button>
+        </div>
+        
+        <div id="recorded" class="content">
+            <h2>Recorded Announcement</h2>
+            <button id="start-record">Start Recording</button>
+            <button id="stop-record" disabled>Stop Recording</button>
+            <audio id="audio-playback" controls></audio>
+        </div>
     </div>
-    <!-- Live Section -->
-    <section id="live" class="active">
-      <h2>Live Announcements</h2>
-      <button id="startLive">Start Live Announcement</button>
-      <button id="stopLive" disabled>Stop Live Announcement</button>
-      <br/>
-      <label for="sensitivity">Mic Sensitivity:</label>
-      <input type="range" id="sensitivity" min="1" max="5" value="2" step="0.1" />
-      <label for="amplification">Amplification:</label>
-      <input type="range" id="amplification" min="1" max="5" value="1" step="0.1" />
-      <audio id="liveAudio" controls></audio>
-      <div id="volumeMeter"><div id="volumeLevel"></div></div>
-      <canvas id="waveform"></canvas>
-    </section>
-    <!-- Recorded Section -->
-    <section id="recorded">
-      <h2>Recorded Announcements</h2>
-      <button id="startRecord">Start Recording</button>
-      <button id="stopRecord" disabled>Stop Recording</button>
-      <button id="clearRecordings" style="background:#dc3545;">Clear All Recordings</button>
-      <h3>Saved Recordings:</h3>
-      <ul id="recordingList"></ul>
-      <h3>Select Audio Output:</h3>
-      <select id="audioOutputSelect"></select>
-    </section>
-  </div>
-  <footer>
-    &copy; 2025 Live Announcements. All rights reserved.
-  </footer>
 
-  <script>
-    let mediaRecorder, audioChunks = [];
-    let liveStream = null;
-    let recordings = JSON.parse(localStorage.getItem("recordings")) || [];
-    let audioContext, analyser, dataArray, sourceNode, gainNode, meterInterval, waveformInterval;
-    const canvas = document.getElementById("waveform");
-    const canvasCtx = canvas.getContext("2d");
+    <script>
+        // Tab switching logic
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                document.querySelectorAll('.content').forEach(content => content.classList.remove('active'));
+                document.getElementById(tab.dataset.target).classList.add('active');
+            });
+        });
 
-    // Toast Notification Function
-    const notificationEl = document.getElementById("notification");
-    function showNotification(message, duration = 3000) {
-      notificationEl.textContent = message;
-      notificationEl.classList.add("show");
-      setTimeout(() => notificationEl.classList.remove("show"), duration);
-    }
-
-    // Theme Toggle
-    const themeToggle = document.getElementById("themeToggle");
-    themeToggle.addEventListener("click", () => {
-      document.body.classList.toggle("dark");
-      document.body.classList.toggle("light");
-      themeToggle.textContent = document.body.classList.contains("dark")
-        ? "Light Mode"
-        : "Dark Mode";
-    });
-
-    // Tab Switching
-    document.querySelectorAll(".tab").forEach(tab => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
-        document.getElementById(tab.dataset.tab).classList.add("active");
-      });
-    });
-
-    // Request microphone access for live announcements with noise suppression, echo cancellation, and auto gain control enabled
-    async function requestLiveMicAccess() {
-      try {
-        const constraints = { 
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        };
-        return await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (error) {
-        alert("Microphone access denied. Please allow microphone permissions.");
-        console.error(error);
-        return null;
-      }
-    }
-
-    // Existing requestMicAccess function remains unchanged for recorded announcements
-    async function requestMicAccess() {
-      try {
-        const constraints = { 
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false
-          }
-        };
-        return await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (error) {
-        alert("Microphone access denied. Please allow microphone permissions.");
-        console.error(error);
-        return null;
-      }
-    }
-
-    // Update gain based on sensitivity and amplification
-    function updateGain() {
-      if (!gainNode) return;
-      const sensitivity = parseFloat(document.getElementById("sensitivity").value);
-      const amplification = parseFloat(document.getElementById("amplification").value);
-      gainNode.gain.value = sensitivity * amplification;
-    }
-
-    // Setup Audio Visualization for Live Announcements
-    function setupAudioVisualization(stream) {
-      // Create AudioContext and force audio output to speaker if supported
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioContext.setSinkId) {
-        audioContext.setSinkId("default")
-          .then(() => console.log("Routing audio to speaker."))
-          .catch(err => console.warn("Failed to set speaker output:", err));
-      }
-      sourceNode = audioContext.createMediaStreamSource(stream);
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      dataArray = new Uint8Array(analyser.frequencyBinCount);
-      gainNode = audioContext.createGain();
-      
-      // Initial gain update
-      updateGain();
-
-      // Connect the audio nodes: mic -> gain -> analyser
-      // Note: We no longer connect the analyser to the destination to avoid interference with the audio element playback.
-      sourceNode.connect(gainNode);
-      gainNode.connect(analyser);
-      
-      // Update gain when sliders change
-      document.getElementById("sensitivity").addEventListener("input", updateGain);
-      document.getElementById("amplification").addEventListener("input", updateGain);
-      
-      // Update volume meter every 100ms
-      meterInterval = setInterval(() => {
-        analyser.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-        const percent = Math.min(100, (average / 128) * 100);
-        document.getElementById("volumeLevel").style.width = percent + "%";
-      }, 100);
-      
-      // Draw waveform every 100ms
-      waveformInterval = setInterval(drawWaveform, 100);
-    }
-    
-    // Draw Waveform on Canvas
-    function drawWaveform() {
-      if (!analyser) return;
-      const width = canvas.width = canvas.clientWidth;
-      const height = canvas.height = canvas.clientHeight;
-      analyser.getByteTimeDomainData(dataArray);
-      canvasCtx.fillStyle = "#eee";
-      canvasCtx.fillRect(0, 0, width, height);
-      canvasCtx.lineWidth = 2;
-      canvasCtx.strokeStyle = "#007bff";
-      canvasCtx.beginPath();
-      const sliceWidth = width / dataArray.length;
-      let x = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = (v * height) / 2;
-        i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y);
-        x += sliceWidth;
-      }
-      canvasCtx.lineTo(width, height/2);
-      canvasCtx.stroke();
-    }
-
-    // Start Live Announcement with visualization & improved audio processing
-    document.getElementById("startLive").addEventListener("click", async () => {
-      if (liveStream) return;
-      // Use the live mic access with noise suppression, echo cancellation, and auto gain control enabled.
-      liveStream = await requestLiveMicAccess();
-      if (liveStream) {
-        const audioElement = document.getElementById("liveAudio");
-        audioElement.srcObject = liveStream;
-        audioElement.play();
-        setupAudioVisualization(liveStream);
-        document.getElementById("stopLive").disabled = false;
-        showNotification("Live announcement started.");
-      }
-    });
-
-    // Stop Live Announcement
-    document.getElementById("stopLive").addEventListener("click", () => {
-      if (liveStream) {
-        liveStream.getTracks().forEach(track => track.stop());
-        liveStream = null;
-        clearInterval(meterInterval);
-        clearInterval(waveformInterval);
-        showNotification("Live announcement stopped.");
-        document.getElementById("stopLive").disabled = true;
-      }
-    });
-
-    // Recording Feature
-    document.getElementById("startRecord").addEventListener("click", async () => {
-      if (mediaRecorder) return;
-      const stream = await requestMicAccess();
-      if (stream) {
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
-          const audioUrl = URL.createObjectURL(audioBlob);
-          let fileName = prompt("Enter a name for your recording:", "Announcement") || "Unnamed";
-          recordings.push({ name: fileName, url: audioUrl, blob: audioBlob });
-          localStorage.setItem("recordings", JSON.stringify(recordings));
-          updateRecordingList();
-          mediaRecorder = null;
-          showNotification("Recording saved.");
-        };
-        mediaRecorder.start();
-        document.getElementById("stopRecord").disabled = false;
-        document.getElementById("startRecord").disabled = true;
-        showNotification("Recording started.");
-      }
-    });
-
-    document.getElementById("stopRecord").addEventListener("click", () => {
-      if (mediaRecorder) {
-        mediaRecorder.stop();
-        document.getElementById("stopRecord").disabled = true;
-        document.getElementById("startRecord").disabled = false;
-        showNotification("Recording stopped.");
-      }
-    });
-
-    // Clear All Recordings
-    document.getElementById("clearRecordings").addEventListener("click", () => {
-      if (confirm("Are you sure you want to clear all recordings?")) {
-        recordings = [];
-        localStorage.removeItem("recordings");
-        updateRecordingList();
-        showNotification("All recordings cleared.");
-      }
-    });
-
-    // Update Recordings List
-    function updateRecordingList() {
-      const list = document.getElementById("recordingList");
-      list.innerHTML = "";
-      recordings.forEach((rec, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <strong>${rec.name}</strong>
-          <button onclick="playRecording(${index})">▶ Play</button>
-          <button onclick="renameRecording(${index})">✏ Rename</button>
-          <button onclick="deleteRecording(${index})">🗑 Delete</button>
-        `;
-        list.appendChild(li);
-      });
-    }
-
-    // Play a Recording with custom audio output routing
-    async function playRecording(index) {
-      const selectedDeviceId = document.getElementById("audioOutputSelect").value;
-      const audio = new Audio(URL.createObjectURL(recordings[index].blob));
-      if (typeof audio.setSinkId !== "undefined" && selectedDeviceId) {
-        try {
-          await audio.setSinkId(selectedDeviceId);
-          console.log(`Playing on device: ${selectedDeviceId}`);
-        } catch (err) {
-          console.error("Error setting audio output:", err);
-          alert("Your browser does not support changing audio output.");
+        // Live announcement function
+        function speakLive() {
+            let text = document.getElementById("live-text").value;
+            let speech = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(speech);
         }
-      }
-      audio.play();
-    }
 
-    // Rename a Recording
-    function renameRecording(index) {
-      const newName = prompt("Enter a new name for this recording:", recordings[index].name);
-      if (newName) {
-        recordings[index].name = newName;
-        localStorage.setItem("recordings", JSON.stringify(recordings));
-        updateRecordingList();
-        showNotification("Recording renamed.");
-      }
-    }
+        // Theme toggling
+        document.querySelector('.theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            document.body.style.backgroundColor = document.body.classList.contains('dark-mode') ? '#333' : '#f4f4f4';
+            document.body.style.color = document.body.classList.contains('dark-mode') ? 'white' : 'black';
+        });
 
-    // Delete a Recording
-    function deleteRecording(index) {
-      recordings.splice(index, 1);
-      localStorage.setItem("recordings", JSON.stringify(recordings));
-      updateRecordingList();
-      showNotification("Recording deleted.");
-    }
+        // Recording functionality
+        let mediaRecorder;
+        let audioChunks = [];
+        
+        document.getElementById("start-record").addEventListener("click", async () => {
+            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            mediaRecorder.onstop = () => {
+                let audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                let audioUrl = URL.createObjectURL(audioBlob);
+                document.getElementById("audio-playback").src = audioUrl;
+            };
+            
+            mediaRecorder.start();
+            document.getElementById("start-record").disabled = true;
+            document.getElementById("stop-record").disabled = false;
+        });
 
-    // Get Audio Output Devices for playback
-    async function getAudioOutputDevices() {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const speakers = devices.filter(device => device.kind === "audiooutput");
-      const select = document.getElementById("audioOutputSelect");
-      select.innerHTML = speakers.map(device =>
-        `<option value="${device.deviceId}">${device.label || "Unknown Output"}</option>`
-      ).join("");
-      select.addEventListener("change", (event) => setAudioOutput(event.target.value));
-    }
-
-    async function setAudioOutput(deviceId) {
-      const audioElement = new Audio();
-      if (typeof audioElement.setSinkId !== "undefined") {
-        try {
-          await audioElement.setSinkId(deviceId);
-          console.log(`Audio output set to: ${deviceId}`);
-        } catch (err) {
-          console.error("Failed to set audio output:", err);
-        }
-      } else {
-        alert("Your browser does not support setting audio output devices.");
-      }
-    }
-
-    window.onload = () => {
-      updateRecordingList();
-      getAudioOutputDevices();
-    };
-  </script>
+        document.getElementById("stop-record").addEventListener("click", () => {
+            mediaRecorder.stop();
+            document.getElementById("start-record").disabled = false;
+            document.getElementById("stop-record").disabled = true;
+        });
+    </script>
 </body>
 </html>
