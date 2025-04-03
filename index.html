@@ -74,8 +74,8 @@
                     let fileName = prompt("Enter a name for your recording:", "Announcement");
                     if (!fileName) fileName = "Unnamed";
 
-                    recordings.push({ name: fileName, url: audioUrl });
-                    localStorage.setItem("recordings", JSON.stringify(recordings));
+                    recordings.push({ name: fileName, url: audioUrl, blob: audioBlob });
+                    localStorage.setItem("recordings", JSON.stringify(recordings.map(r => ({ name: r.name })))); // Store names only
                     updateRecordingList();
 
                     mediaRecorder = null;
@@ -103,21 +103,21 @@
                 let li = document.createElement("li");
                 li.innerHTML = `
                     ${rec.name} 
-                    <button onclick="playRecording('${rec.url}')">▶ Play</button>
+                    <button onclick="playRecording(${index})">▶ Play</button>
                     <button onclick="deleteRecording(${index})">🗑 Delete</button>
                 `;
                 list.appendChild(li);
             });
         }
 
-        function playRecording(url) {
-            let audio = new Audio(url);
+        function playRecording(index) {
+            let audio = new Audio(URL.createObjectURL(recordings[index].blob));
             audio.play();
         }
 
         function deleteRecording(index) {
             recordings.splice(index, 1);
-            localStorage.setItem("recordings", JSON.stringify(recordings));
+            localStorage.setItem("recordings", JSON.stringify(recordings.map(r => ({ name: r.name })))); // Store names only
             updateRecordingList();
         }
 
