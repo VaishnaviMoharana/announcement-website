@@ -250,7 +250,7 @@
       });
     });
 
-    // Request live microphone access with noise suppression, echo cancellation, and auto gain control enabled
+    // Request microphone access for live announcements with noise suppression, echo cancellation, and auto gain control enabled
     async function requestLiveMicAccess() {
       try {
         const constraints = { 
@@ -294,7 +294,7 @@
       gainNode.gain.value = sensitivity * amplification;
     }
 
-    // Setup Audio Visualization for Live Announcements
+    // Setup Audio Visualization & Force Speaker Output
     function setupAudioVisualization(stream) {
       // Create AudioContext and force audio output to speaker if supported
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -312,10 +312,10 @@
       // Initial gain update
       updateGain();
 
-      // Connect the audio nodes: mic -> gain -> analyser
-      // (Do NOT connect analyser to destination to avoid duplicate playback)
+      // Connect the audio nodes: mic -> gain -> analyser -> speaker
       sourceNode.connect(gainNode);
       gainNode.connect(analyser);
+      analyser.connect(audioContext.destination);
       
       // Update gain when sliders change
       document.getElementById("sensitivity").addEventListener("input", updateGain);
@@ -359,6 +359,7 @@
     // Start Live Announcement with visualization & improved audio processing
     document.getElementById("startLive").addEventListener("click", async () => {
       if (liveStream) return;
+      // Use the live mic access with noise suppression etc.
       liveStream = await requestLiveMicAccess();
       if (liveStream) {
         const audioElement = document.getElementById("liveAudio");
@@ -382,7 +383,7 @@
       }
     });
 
-    // Recording Feature (unchanged)
+    // Recording Feature
     document.getElementById("startRecord").addEventListener("click", async () => {
       if (mediaRecorder) return;
       const stream = await requestMicAccess();
