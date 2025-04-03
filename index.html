@@ -1,212 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Announcements</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Announcements</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      color: #444;
+    }
+    button {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background: #0056b3;
+    }
+    audio {
+      width: 100%;
+      margin-top: 10px;
+    }
+    select {
+      padding: 8px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
 <body>
-    <h2>Live Announcements</h2>
-    <button id="startLive">Start Live Announcement</button>
-    <button id="stopLive" disabled>Stop Live Announcement</button>
-    <audio id="liveAudio" controls></audio>  <!-- Added for live audio playback -->
+  <h2>Live Announcements</h2>
+  <button id="startLive">Start Live Announcement</button>
+  <button id="stopLive" disabled>Stop Live Announcement</button>
+  <audio id="liveAudio" controls></audio>
 
-    <h2>Recorded Announcements</h2>
-    <button id="startRecord">Start Recording</button>
-    <button id="stopRecord" disabled>Stop Recording</button>
+  <h2>Recorded Announcements</h2>
+  <button id="startRecord">Start Recording</button>
+  <button id="stopRecord" disabled>Stop Recording</button>
 
-    <h3>Saved Recordings:</h3>
-    <ul id="recordingList"></ul>
+  <h3>Saved Recordings:</h3>
+  <ul id="recordingList"></ul>
 
-    <h3>Select Audio Output:</h3>
-    <select id="audioOutputSelect"></select>
+  <h3>Select Audio Output:</h3>
+  <select id="audioOutputSelect"></select>
 
-    <script>
-        let mediaRecorder, audioChunks = [];
-        let liveStream = null;
-        let recordings = JSON.parse(localStorage.getItem("recordings")) || [];
+  <script>
+    let mediaRecorder, audioChunks = [];
+    let liveStream = null;
+    let recordings = JSON.parse(localStorage.getItem("recordings")) || [];
 
-        async function requestMicAccess() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                return stream;
-            } catch (error) {
-                alert("Microphone access denied. Please allow microphone permissions.");
-                console.error(error);
-                return null;
-            }
-        }
+    async function requestMicAccess() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        return stream;
+      } catch (error) {
+        alert("Microphone access denied. Please allow microphone permissions.");
+        console.error(error);
+        return null;
+      }
+    }
 
-        // 🔹 Live Announcement Feature (Modified)
-        document.getElementById("startLive").addEventListener("click", async () => {
-            console.log("Start Live Announcement clicked");
-            if (liveStream) return;
+    // 🔹 Live Announcement Feature (Modified with Gain Node)
+    document.getElementById("startLive").addEventListener("click", async () => {
+      console.log("Start Live Announcement clicked");
+      if (liveStream) return;
 
-            liveStream = await requestMicAccess();
-            if (liveStream) {
-                // Create an AudioContext and a source from the liveStream
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioContext.createMediaStreamSource(liveStream);
-                const destination = audioContext.destination;
+      liveStream = await requestMicAccess();
+      if (liveStream) {
+        // Create an AudioContext, source, and gain node
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(liveStream);
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = 2; // Increase mic gain (adjust as needed)
+        const destination = audioContext.destination;
 
-                // 🔥 Force audio to play on speaker using sinkId
-                if (audioContext.setSinkId) {
-                    try {
-                        await audioContext.setSinkId("default"); // Or use specific speaker device ID
-                        console.log("Routing audio to speaker.");
-                    } catch (err) {
-                        console.warn("Failed to set speaker output:", err);
-                    }
-                }
+        // Connect source -> gain -> destination
+        source.connect(gainNode);
+        gainNode.connect(destination);
 
-                // Connect the source to the destination
-                source.connect(destination);
+        // Optional: Also attach stream to the audio element for UI playback control
+        let audioElement = document.getElementById("liveAudio");
+        audioElement.srcObject = liveStream;
+        audioElement.play();
 
-                // Optional: Also attach stream to the audio element for UI playback control
-                let audioElement = document.getElementById("liveAudio");
-                audioElement.srcObject = liveStream;
-                audioElement.play();
+        document.getElementById("stopLive").disabled = false;
+      }
+    });
 
-                document.getElementById("stopLive").disabled = false;
-            }
-        });
+    document.getElementById("stopLive").addEventListener("click", () => {
+      console.log("Stop Live Announcement clicked");
+      if (liveStream) {
+        liveStream.getTracks().forEach(track => track.stop());
+        liveStream = null;
+        document.getElementById("stopLive").disabled = true;
+      }
+    });
 
-        document.getElementById("stopLive").addEventListener("click", () => {
-            console.log("Stop Live Announcement clicked");
-            if (liveStream) {
-                liveStream.getTracks().forEach(track => track.stop());
-                liveStream = null;
-                document.getElementById("stopLive").disabled = true;
-            }
-        });
+    // 🔹 Recording Feature
+    document.getElementById("startRecord").addEventListener("click", async () => {
+      console.log("Start Recording clicked");
+      if (mediaRecorder) return;
 
-        // 🔹 Recording Feature
-        document.getElementById("startRecord").addEventListener("click", async () => {
-            console.log("Start Recording clicked");
-            if (mediaRecorder) return;
+      let stream = await requestMicAccess();
+      if (stream) {
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
 
-            let stream = await requestMicAccess();
-            if (stream) {
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = event => {
-                    audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = () => {
-                    let audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
-                    let audioUrl = URL.createObjectURL(audioBlob);
-
-                    let fileName = prompt("Enter a name for your recording:", "Announcement");
-                    if (!fileName) fileName = "Unnamed";
-
-                    recordings.push({ name: fileName, url: audioUrl, blob: audioBlob });
-                    localStorage.setItem("recordings", JSON.stringify(recordings));
-                    updateRecordingList();
-
-                    mediaRecorder = null;
-                };
-
-                mediaRecorder.start();
-                document.getElementById("stopRecord").disabled = false;
-                document.getElementById("startRecord").disabled = true;
-            }
-        });
-
-        document.getElementById("stopRecord").addEventListener("click", () => {
-            console.log("Stop Recording clicked");
-            if (mediaRecorder) {
-                mediaRecorder.stop();
-                document.getElementById("stopRecord").disabled = true;
-                document.getElementById("startRecord").disabled = false;
-            }
-        });
-
-        function updateRecordingList() {
-            let list = document.getElementById("recordingList");
-            list.innerHTML = "";
-
-            recordings.forEach((rec, index) => {
-                let li = document.createElement("li");
-                li.innerHTML = `
-                    ${rec.name} 
-                    <button onclick="playRecording(${index})">▶ Play</button>
-                    <button onclick="renameRecording(${index})">✏ Rename</button>
-                    <button onclick="deleteRecording(${index})">🗑 Delete</button>
-                `;
-                list.appendChild(li);
-            });
-        }
-
-        async function playRecording(index) {
-            console.log(`Playing recording: ${recordings[index].name}`);
-            let selectedDeviceId = document.getElementById("audioOutputSelect").value;
-
-            let audio = new Audio(URL.createObjectURL(recordings[index].blob));
-
-            // 🔹 Force audio to play through selected speaker
-            if (typeof audio.setSinkId !== "undefined" && selectedDeviceId) {
-                try {
-                    await audio.setSinkId(selectedDeviceId);
-                    console.log(`Playing on device: ${selectedDeviceId}`);
-                } catch (err) {
-                    console.error("Error setting audio output:", err);
-                    alert("Your browser does not support changing audio output.");
-                }
-            }
-
-            audio.play();
-        }
-
-        function renameRecording(index) {
-            let newName = prompt("Enter a new name for this recording:", recordings[index].name);
-            if (newName) {
-                recordings[index].name = newName;
-                localStorage.setItem("recordings", JSON.stringify(recordings));
-                updateRecordingList();
-            }
-        }
-
-        function deleteRecording(index) {
-            recordings.splice(index, 1);
-            localStorage.setItem("recordings", JSON.stringify(recordings));
-            updateRecordingList();
-        }
-
-        // 🔹 Get and Set Audio Output Device
-        async function getAudioOutputDevices() {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const speakers = devices.filter(device => device.kind === "audiooutput");
-
-            let select = document.getElementById("audioOutputSelect");
-            select.innerHTML = speakers.map(device => 
-                `<option value="${device.deviceId}">${device.label || "Unknown Output"}</option>`
-            ).join("");
-
-            select.addEventListener("change", (event) => {
-                setAudioOutput(event.target.value);
-            });
-        }
-
-        async function setAudioOutput(deviceId) {
-            let audioElement = new Audio();
-            if (typeof audioElement.setSinkId !== "undefined") {
-                try {
-                    await audioElement.setSinkId(deviceId);
-                    console.log(`Audio output set to: ${deviceId}`);
-                } catch (err) {
-                    console.error("Failed to set audio output:", err);
-                }
-            } else {
-                alert("Your browser does not support setting audio output devices.");
-            }
-        }
-
-        window.onload = () => {
-            updateRecordingList();
-            getAudioOutputDevices();
+        mediaRecorder.ondataavailable = event => {
+          audioChunks.push(event.data);
         };
-    </script>
+
+        mediaRecorder.onstop = () => {
+          let audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+          let audioUrl = URL.createObjectURL(audioBlob);
+          let fileName = prompt("Enter a name for your recording:", "Announcement");
+          if (!fileName) fileName = "Unnamed";
+
+          recordings.push({ name: fileName, url: audioUrl, blob: audioBlob });
+          localStorage.setItem("recordings", JSON.stringify(recordings));
+          updateRecordingList();
+          mediaRecorder = null;
+        };
+
+        mediaRecorder.start();
+        document.getElementById("stopRecord").disabled = false;
+        document.getElementById("startRecord").disabled = true;
+      }
+    });
+
+    document.getElementById("stopRecord").addEventListener("click", () => {
+      console.log("Stop Recording clicked");
+      if (mediaRecorder) {
+        mediaRecorder.stop();
+        document.getElementById("stopRecord").disabled = true;
+        document.getElementById("startRecord").disabled = false;
+      }
+    });
+
+    function updateRecordingList() {
+      let list = document.getElementById("recordingList");
+      list.innerHTML = "";
+      recordings.forEach((rec, index) => {
+        let li = document.createElement("li");
+        li.innerHTML = `
+          <strong>${rec.name}</strong>
+          <button onclick="playRecording(${index})">▶ Play</button>
+          <button onclick="renameRecording(${index})">✏ Rename</button>
+          <button onclick="deleteRecording(${index})">🗑 Delete</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    async function playRecording(index) {
+      console.log(`Playing recording: ${recordings[index].name}`);
+      let selectedDeviceId = document.getElementById("audioOutputSelect").value;
+      let audio = new Audio(URL.createObjectURL(recordings[index].blob));
+
+      // 🔹 Force audio to play through selected speaker
+      if (typeof audio.setSinkId !== "undefined" && selectedDeviceId) {
+        try {
+          await audio.setSinkId(selectedDeviceId);
+          console.log(`Playing on device: ${selectedDeviceId}`);
+        } catch (err) {
+          console.error("Error setting audio output:", err);
+          alert("Your browser does not support changing audio output.");
+        }
+      }
+      audio.play();
+    }
+
+    function renameRecording(index) {
+      let newName = prompt("Enter a new name for this recording:", recordings[index].name);
+      if (newName) {
+        recordings[index].name = newName;
+        localStorage.setItem("recordings", JSON.stringify(recordings));
+        updateRecordingList();
+      }
+    }
+
+    function deleteRecording(index) {
+      recordings.splice(index, 1);
+      localStorage.setItem("recordings", JSON.stringify(recordings));
+      updateRecordingList();
+    }
+
+    // 🔹 Get and Set Audio Output Device
+    async function getAudioOutputDevices() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const speakers = devices.filter(device => device.kind === "audiooutput");
+      let select = document.getElementById("audioOutputSelect");
+      select.innerHTML = speakers.map(device =>
+        `<option value="${device.deviceId}">${device.label || "Unknown Output"}</option>`
+      ).join("");
+      select.addEventListener("change", (event) => {
+        setAudioOutput(event.target.value);
+      });
+    }
+
+    async function setAudioOutput(deviceId) {
+      let audioElement = new Audio();
+      if (typeof audioElement.setSinkId !== "undefined") {
+        try {
+          await audioElement.setSinkId(deviceId);
+          console.log(`Audio output set to: ${deviceId}`);
+        } catch (err) {
+          console.error("Failed to set audio output:", err);
+        }
+      } else {
+        alert("Your browser does not support setting audio output devices.");
+      }
+    }
+
+    window.onload = () => {
+      updateRecordingList();
+      getAudioOutputDevices();
+    };
+  </script>
 </body>
 </html>
