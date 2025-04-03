@@ -250,7 +250,25 @@
       });
     });
 
-    // Request microphone access with disabled echo cancellation, noise suppression, and auto gain control
+    // Request live microphone access with noise suppression, echo cancellation, and auto gain control enabled
+    async function requestLiveMicAccess() {
+      try {
+        const constraints = { 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        };
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (error) {
+        alert("Microphone access denied. Please allow microphone permissions.");
+        console.error(error);
+        return null;
+      }
+    }
+
+    // Existing requestMicAccess function remains unchanged for recorded announcements
     async function requestMicAccess() {
       try {
         const constraints = { 
@@ -276,7 +294,7 @@
       gainNode.gain.value = sensitivity * amplification;
     }
 
-    // Setup Audio Visualization & Force Speaker Output
+    // Setup Audio Visualization for Live Announcements
     function setupAudioVisualization(stream) {
       // Create AudioContext and force audio output to speaker if supported
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -294,10 +312,10 @@
       // Initial gain update
       updateGain();
 
-      // Connect the audio nodes: mic -> gain -> analyser -> speaker
+      // Connect the audio nodes: mic -> gain -> analyser
+      // (Do NOT connect analyser to destination to avoid duplicate playback)
       sourceNode.connect(gainNode);
       gainNode.connect(analyser);
-      analyser.connect(audioContext.destination);
       
       // Update gain when sliders change
       document.getElementById("sensitivity").addEventListener("input", updateGain);
@@ -338,10 +356,10 @@
       canvasCtx.stroke();
     }
 
-    // Start Live Announcement with visualization & forced speaker routing
+    // Start Live Announcement with visualization & improved audio processing
     document.getElementById("startLive").addEventListener("click", async () => {
       if (liveStream) return;
-      liveStream = await requestMicAccess();
+      liveStream = await requestLiveMicAccess();
       if (liveStream) {
         const audioElement = document.getElementById("liveAudio");
         audioElement.srcObject = liveStream;
@@ -364,7 +382,7 @@
       }
     });
 
-    // Recording Feature
+    // Recording Feature (unchanged)
     document.getElementById("startRecord").addEventListener("click", async () => {
       if (mediaRecorder) return;
       const stream = await requestMicAccess();
