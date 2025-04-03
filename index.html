@@ -1,43 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Live Announcements</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
+      font-family: 'Roboto', sans-serif;
+      background-color: #eef2f7;
       margin: 0;
-      padding: 20px;
+      padding: 0;
       color: #333;
     }
-    h2 {
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    header {
+      background-color: #007bff;
+      padding: 15px;
+      border-radius: 10px 10px 0 0;
+      color: #fff;
+      text-align: center;
+    }
+    h2, h3 {
+      margin-top: 20px;
       color: #444;
     }
     button {
-      background: #007bff;
+      background-color: #007bff;
       color: #fff;
       border: none;
       padding: 10px 20px;
-      margin: 5px;
+      margin: 10px 5px 10px 0;
       border-radius: 5px;
       cursor: pointer;
       transition: background 0.3s ease;
     }
     button:disabled {
-      background: #aaa;
+      background-color: #aaa;
       cursor: not-allowed;
     }
     button:hover:not(:disabled) {
-      background: #0056b3;
+      background-color: #0056b3;
     }
     audio {
       width: 100%;
-      margin-top: 10px;
+      margin: 10px 0;
     }
     select {
       padding: 8px;
+      border: 1px solid #ccc;
       border-radius: 5px;
       margin-top: 10px;
     }
@@ -46,29 +64,46 @@
       padding: 0;
     }
     li {
-      background: #fff;
+      background: #f9f9f9;
+      margin: 10px 0;
       padding: 10px;
-      margin-bottom: 5px;
       border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    li strong {
+      flex: 1;
+    }
+    li button {
+      margin: 0 3px;
+      padding: 5px 10px;
+      font-size: 0.9em;
     }
   </style>
 </head>
 <body>
-  <h2>Live Announcements</h2>
-  <button id="startLive">Start Live Announcement</button>
-  <button id="stopLive" disabled>Stop Live Announcement</button>
-  <audio id="liveAudio" controls></audio>
-
-  <h2>Recorded Announcements</h2>
-  <button id="startRecord">Start Recording</button>
-  <button id="stopRecord" disabled>Stop Recording</button>
-
-  <h3>Saved Recordings:</h3>
-  <ul id="recordingList"></ul>
-
-  <h3>Select Audio Output:</h3>
-  <select id="audioOutputSelect"></select>
+  <div class="container">
+    <header>
+      <h1>Live Announcements</h1>
+    </header>
+    <section>
+      <h2>Live Announcements</h2>
+      <button id="startLive">Start Live Announcement</button>
+      <button id="stopLive" disabled>Stop Live Announcement</button>
+      <audio id="liveAudio" controls></audio>
+    </section>
+    <section>
+      <h2>Recorded Announcements</h2>
+      <button id="startRecord">Start Recording</button>
+      <button id="stopRecord" disabled>Stop Recording</button>
+      <h3>Saved Recordings:</h3>
+      <ul id="recordingList"></ul>
+      <h3>Select Audio Output:</h3>
+      <select id="audioOutputSelect"></select>
+    </section>
+  </div>
 
   <script>
     let mediaRecorder, audioChunks = [];
@@ -104,7 +139,7 @@
         source.connect(gainNode);
         gainNode.connect(destination);
 
-        // Optional: Also attach stream to the audio element for UI playback control
+        // Optional: Attach stream to the audio element for UI playback control
         let audioElement = document.getElementById("liveAudio");
         audioElement.srcObject = liveStream;
         audioElement.play();
