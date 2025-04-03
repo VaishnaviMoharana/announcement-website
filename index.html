@@ -107,6 +107,7 @@
                 li.innerHTML = `
                     ${rec.name} 
                     <button onclick="playRecording(${index})">▶ Play</button>
+                    <button onclick="renameRecording(${index})">✏ Rename</button>
                     <button onclick="deleteRecording(${index})">🗑 Delete</button>
                 `;
                 list.appendChild(li);
@@ -114,16 +115,31 @@
         }
 
         async function playRecording(index) {
+            let selectedDeviceId = document.getElementById("audioOutputSelect").value;
+
             let audio = new Audio(URL.createObjectURL(recordings[index].blob));
 
-            if (typeof audio.setSinkId !== "undefined") {
-                let selectedDeviceId = document.getElementById("audioOutputSelect").value;
-                if (selectedDeviceId) {
+            // 🔹 Force audio to play through selected speaker
+            if (typeof audio.setSinkId !== "undefined" && selectedDeviceId) {
+                try {
                     await audio.setSinkId(selectedDeviceId);
+                    console.log(`Playing on device: ${selectedDeviceId}`);
+                } catch (err) {
+                    console.error("Error setting audio output:", err);
+                    alert("Your browser does not support changing audio output.");
                 }
             }
 
             audio.play();
+        }
+
+        function renameRecording(index) {
+            let newName = prompt("Enter a new name for this recording:", recordings[index].name);
+            if (newName) {
+                recordings[index].name = newName;
+                localStorage.setItem("recordings", JSON.stringify(recordings));
+                updateRecordingList();
+            }
         }
 
         function deleteRecording(index) {
@@ -150,8 +166,12 @@
         async function setAudioOutput(deviceId) {
             let audioElement = new Audio();
             if (typeof audioElement.setSinkId !== "undefined") {
-                await audioElement.setSinkId(deviceId);
-                console.log(`Audio output set to: ${deviceId}`);
+                try {
+                    await audioElement.setSinkId(deviceId);
+                    console.log(`Audio output set to: ${deviceId}`);
+                } catch (err) {
+                    console.error("Failed to set audio output:", err);
+                }
             } else {
                 alert("Your browser does not support setting audio output devices.");
             }
