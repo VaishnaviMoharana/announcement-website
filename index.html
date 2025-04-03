@@ -294,7 +294,7 @@
       gainNode.gain.value = sensitivity * amplification;
     }
 
-    // Setup Audio Visualization & Force Speaker Output
+    // Setup Audio Visualization for Live Announcements
     function setupAudioVisualization(stream) {
       // Create AudioContext and force audio output to speaker if supported
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -312,10 +312,10 @@
       // Initial gain update
       updateGain();
 
-      // Connect the audio nodes: mic -> gain -> analyser -> speaker
+      // Connect the audio nodes: mic -> gain -> analyser
+      // Note: We no longer connect the analyser to the destination to avoid interference with the audio element playback.
       sourceNode.connect(gainNode);
       gainNode.connect(analyser);
-      analyser.connect(audioContext.destination);
       
       // Update gain when sliders change
       document.getElementById("sensitivity").addEventListener("input", updateGain);
@@ -359,7 +359,7 @@
     // Start Live Announcement with visualization & improved audio processing
     document.getElementById("startLive").addEventListener("click", async () => {
       if (liveStream) return;
-      // Use the live mic access with noise suppression etc.
+      // Use the live mic access with noise suppression, echo cancellation, and auto gain control enabled.
       liveStream = await requestLiveMicAccess();
       if (liveStream) {
         const audioElement = document.getElementById("liveAudio");
