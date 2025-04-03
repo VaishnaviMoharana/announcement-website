@@ -192,6 +192,8 @@
       <br/>
       <label for="sensitivity">Mic Sensitivity:</label>
       <input type="range" id="sensitivity" min="1" max="5" value="2" step="0.1" />
+      <label for="amplification">Amplification:</label>
+      <input type="range" id="amplification" min="1" max="5" value="1" step="0.1" />
       <audio id="liveAudio" controls></audio>
       <div id="volumeMeter"><div id="volumeLevel"></div></div>
       <canvas id="waveform"></canvas>
@@ -248,15 +250,30 @@
       });
     });
 
-    // Request microphone access
+    // Request microphone access with disabled echo cancellation, noise suppression, and auto gain control
     async function requestMicAccess() {
       try {
-        return await navigator.mediaDevices.getUserMedia({ audio: true });
+        const constraints = { 
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        };
+        return await navigator.mediaDevices.getUserMedia(constraints);
       } catch (error) {
         alert("Microphone access denied. Please allow microphone permissions.");
         console.error(error);
         return null;
       }
+    }
+
+    // Update gain based on sensitivity and amplification
+    function updateGain() {
+      if (!gainNode) return;
+      const sensitivity = parseFloat(document.getElementById("sensitivity").value);
+      const amplification = parseFloat(document.getElementById("amplification").value);
+      gainNode.gain.value = sensitivity * amplification;
     }
 
     // Setup Audio Visualization & Force Speaker Output
@@ -274,13 +291,17 @@
       dataArray = new Uint8Array(analyser.frequencyBinCount);
       gainNode = audioContext.createGain();
       
-      // Apply mic sensitivity from slider
-      gainNode.gain.value = parseFloat(document.getElementById("sensitivity").value);
-      
+      // Initial gain update
+      updateGain();
+
       // Connect the audio nodes: mic -> gain -> analyser -> speaker
       sourceNode.connect(gainNode);
       gainNode.connect(analyser);
       analyser.connect(audioContext.destination);
+      
+      // Update gain when sliders change
+      document.getElementById("sensitivity").addEventListener("input", updateGain);
+      document.getElementById("amplification").addEventListener("input", updateGain);
       
       // Update volume meter every 100ms
       meterInterval = setInterval(() => {
@@ -322,11 +343,9 @@
       if (liveStream) return;
       liveStream = await requestMicAccess();
       if (liveStream) {
-        // Attach stream to audio element for UI control
         const audioElement = document.getElementById("liveAudio");
         audioElement.srcObject = liveStream;
         audioElement.play();
-        // Setup audio context and visualization
         setupAudioVisualization(liveStream);
         document.getElementById("stopLive").disabled = false;
         showNotification("Live announcement started.");
