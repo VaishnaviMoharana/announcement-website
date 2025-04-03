@@ -13,25 +13,29 @@
     <h2>Recorded Announcements</h2>
     <button id="startRecord">Start Recording</button>
     <button id="stopRecord" disabled>Stop Recording</button>
-    <audio id="audioPlayback" controls></audio>
-    
+
+    <h3>Saved Recordings:</h3>
+    <ul id="recordingList"></ul>
+
     <script>
         let mediaRecorder, audioChunks = [];
-        let liveStream = null; // Store the live stream
-        
+        let liveStream = null;
+        let recordings = JSON.parse(localStorage.getItem("recordings")) || [];
+
         async function requestMicAccess() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 return stream;
             } catch (error) {
-                alert("Microphone access denied. Please allow microphone permissions in your browser settings.");
+                alert("Microphone access denied. Please allow microphone permissions.");
                 console.error(error);
                 return null;
             }
         }
 
+        // 🔹 Live Announcement Feature
         document.getElementById("startLive").addEventListener("click", async () => {
-            if (liveStream) return; // Prevent multiple live streams
+            if (liveStream) return;
 
             liveStream = await requestMicAccess();
             if (liveStream) {
@@ -44,14 +48,15 @@
 
         document.getElementById("stopLive").addEventListener("click", () => {
             if (liveStream) {
-                liveStream.getTracks().forEach(track => track.stop()); // Stop the microphone
+                liveStream.getTracks().forEach(track => track.stop());
                 liveStream = null;
                 document.getElementById("stopLive").disabled = true;
             }
         });
 
+        // 🔹 Recording Feature
         document.getElementById("startRecord").addEventListener("click", async () => {
-            if (mediaRecorder) return; // Prevent multiple recordings
+            if (mediaRecorder) return;
 
             let stream = await requestMicAccess();
             if (stream) {
@@ -65,8 +70,15 @@
                 mediaRecorder.onstop = () => {
                     let audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
                     let audioUrl = URL.createObjectURL(audioBlob);
-                    document.getElementById("audioPlayback").src = audioUrl;
-                    mediaRecorder = null; // Reset mediaRecorder
+
+                    let fileName = prompt("Enter a name for your recording:", "Announcement");
+                    if (!fileName) fileName = "Unnamed";
+
+                    recordings.push({ name: fileName, url: audioUrl });
+                    localStorage.setItem("recordings", JSON.stringify(recordings));
+                    updateRecordingList();
+
+                    mediaRecorder = null;
                 };
 
                 mediaRecorder.start();
@@ -82,6 +94,34 @@
                 document.getElementById("startRecord").disabled = false;
             }
         });
+
+        function updateRecordingList() {
+            let list = document.getElementById("recordingList");
+            list.innerHTML = "";
+
+            recordings.forEach((rec, index) => {
+                let li = document.createElement("li");
+                li.innerHTML = `
+                    ${rec.name} 
+                    <button onclick="playRecording('${rec.url}')">▶ Play</button>
+                    <button onclick="deleteRecording(${index})">🗑 Delete</button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function playRecording(url) {
+            let audio = new Audio(url);
+            audio.play();
+        }
+
+        function deleteRecording(index) {
+            recordings.splice(index, 1);
+            localStorage.setItem("recordings", JSON.stringify(recordings));
+            updateRecordingList();
+        }
+
+        updateRecordingList();
     </script>
 </body>
 </html>
