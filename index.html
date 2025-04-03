@@ -2,122 +2,82 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Live Announcements</title>
-
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto&display=swap" rel="stylesheet">
-  <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-9a8DEW1nq0oXr6PnbVQZ+f4SFeHT6W86fYUM2k+8TMEZeEyZ25uCXy66W/2pZJwk8lAAnR6diZfiq2Z+Z3vO3Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
+  <!-- Google Fonts for a modern look -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    /* Reset & Base */
-    * {
-      box-sizing: border-box;
-      margin: 0; 
-      padding: 0;
-    }
-    html, body {
-      height: 100%;
+    /* Reset & Typography */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
       font-family: 'Roboto', sans-serif;
       transition: background-color 0.3s, color 0.3s;
+      min-height: 100vh;
+      line-height: 1.6;
     }
-
-    /* Body Themes */
+    /* Light & Dark Themes */
     body.light {
-      background: linear-gradient(135deg, #FC5C7D 0%, #6A82FB 100%);
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
       color: #333;
     }
     body.dark {
       background: #1e1e1e;
       color: #ddd;
     }
-
     /* Header */
     header {
-      position: relative;
+      background: #007bff;
+      color: #fff;
       padding: 20px;
       text-align: center;
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-      color: #fff;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }
-    header h1 {
-      font-family: 'Poppins', sans-serif;
-      font-size: 1.8rem;
-      margin-bottom: 0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      position: relative;
     }
     header button#themeToggle {
       position: absolute;
       right: 20px;
       top: 20px;
-      background: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.3);
       border: none;
-      padding: 8px 12px;
+      padding: 5px 10px;
       border-radius: 5px;
       cursor: pointer;
       color: #fff;
-      font-weight: 500;
-      transition: background 0.3s;
     }
-    header button#themeToggle:hover {
-      background: rgba(255,255,255,0.35);
-    }
-
-    /* Container */
+    /* Main Container */
     .container {
-      max-width: 960px;
-      margin: 30px auto 20px auto;
+      max-width: 900px;
       background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-      padding: 20px 25px 40px 25px;
-      transition: background 0.3s, color 0.3s;
+      border-radius: 10px;
+      margin: 20px auto;
+      padding: 20px 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: background 0.3s;
     }
     body.dark .container {
       background: #2c2c2c;
     }
-
     /* Tabs */
     .tabs {
       display: flex;
-      margin-bottom: 20px;
       border-bottom: 2px solid #ddd;
+      margin-bottom: 20px;
     }
     .tab {
       flex: 1;
       text-align: center;
-      padding: 12px 0;
+      padding: 12px;
       cursor: pointer;
       font-weight: 500;
-      font-family: 'Poppins', sans-serif;
-      transition: background 0.3s, color 0.3s;
-      position: relative;
+      transition: background 0.3s;
     }
-    .tab:not(.active):hover {
-      background: rgba(0,0,0,0.05);
-    }
-    body.dark .tab:not(.active):hover {
-      background: rgba(255,255,255,0.1);
-    }
-    .tab.active {
-      color: #007bff;
-      border-bottom: 3px solid #007bff;
-    }
-    section {
-      display: none;
-    }
-    section.active {
-      display: block;
-    }
-
+    .tab:hover { background: #f0f0f0; }
+    body.dark .tab:hover { background: #444; }
+    .tab.active { border-bottom: 3px solid #007bff; color: #007bff; }
+    section { display: none; }
+    section.active { display: block; }
     /* Headings */
-    h2, h3 {
-      margin-bottom: 10px;
-      font-family: 'Poppins', sans-serif;
-      color: inherit;
-    }
-
+    h2, h3 { margin-bottom: 10px; }
     /* Buttons */
     button {
       background: #007bff;
@@ -125,52 +85,34 @@
       border: none;
       padding: 10px 20px;
       margin: 8px 5px 8px 0;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
       transition: background 0.3s, transform 0.2s;
-      font-family: 'Poppins', sans-serif;
-      font-size: 0.9rem;
-    }
-    button i {
-      margin-right: 6px;
     }
     button:hover:not(:disabled) {
       background: #0056b3;
       transform: translateY(-2px);
     }
-    button:disabled {
-      background: #aaa;
-      cursor: not-allowed;
-    }
-
+    button:disabled { background: #aaa; cursor: not-allowed; }
     /* Inputs & Selects */
-    label {
-      font-weight: 500;
-    }
-    input[type="range"], select {
-      display: block;
-      width: 100%;
-      margin: 10px 0 15px 0;
-      padding: 6px;
-      border-radius: 6px;
+    select, input[type="range"] {
+      padding: 8px;
       border: 1px solid #ccc;
-      background: #fafafa;
-      font-size: 0.9rem;
-    }
-    body.dark input[type="range"], body.dark select {
-      background: #3c3c3c;
-      border: 1px solid #666;
-      color: #fff;
-    }
-
-    /* Audio Element */
-    audio {
-      width: 100%;
+      border-radius: 5px;
       margin: 10px 0;
-      outline: none;
+      width: 100%;
     }
-
-    /* Volume Meter & Waveform */
+    /* Audio Element */
+    audio { width: 100%; margin: 10px 0; outline: none; }
+    /* Waveform Canvas */
+    #waveform {
+      width: 100%;
+      height: 80px;
+      background: #eee;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    /* Volume Meter */
     #volumeMeter {
       width: 100%;
       height: 20px;
@@ -185,44 +127,25 @@
       background: #28a745;
       transition: width 0.1s;
     }
-    #waveform {
-      width: 100%;
-      height: 80px;
-      background: #eee;
-      border-radius: 6px;
-      margin-top: 10px;
-    }
-
     /* Recordings List */
-    ul {
-      list-style: none;
-      padding: 0;
-    }
+    ul { list-style: none; padding: 0; }
     li {
       background: #f9f9f9;
       margin: 10px 0;
       padding: 10px;
-      border-radius: 8px;
+      border-radius: 5px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-    body.dark li {
-      background: #3c3c3c;
-    }
-    li strong {
-      flex: 1;
-      margin-right: 10px;
-      font-size: 0.95rem;
-      font-family: 'Poppins', sans-serif;
-    }
+    body.dark li { background: #3c3c3c; }
+    li strong { flex: 1; margin-right: 10px; }
     li button {
-      margin: 0 4px;
+      margin: 0 3px;
       padding: 6px 10px;
-      font-size: 0.8rem;
+      font-size: 0.9em;
     }
-
     /* Toast Notification */
     #notification {
       position: fixed;
@@ -236,74 +159,55 @@
       pointer-events: none;
       transition: opacity 0.5s;
       z-index: 1000;
-      font-family: 'Poppins', sans-serif;
     }
-    #notification.show {
-      opacity: 1;
-    }
-
+    #notification.show { opacity: 1; }
     /* Footer */
     footer {
       text-align: center;
       padding: 15px;
-      font-size: 0.9rem;
-      background: rgba(255,255,255,0.2);
-      margin-top: 30px;
-    }
-    body.dark footer {
-      background: rgba(0,0,0,0.2);
+      background: rgba(0, 0, 0, 0.1);
+      font-size: 0.9em;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body class="light">
-  <!-- Header -->
   <header>
     <h1>Live Announcements</h1>
     <button id="themeToggle">Dark Mode</button>
   </header>
-
-  <!-- Main Container -->
   <div class="container">
     <!-- Toast Notification -->
     <div id="notification"></div>
-
-    <!-- Tabs -->
+    <!-- Tabs Navigation -->
     <div class="tabs">
       <div class="tab active" data-tab="live">Live</div>
       <div class="tab" data-tab="recorded">Recorded</div>
     </div>
-
     <!-- Live Section -->
     <section id="live" class="active">
       <h2>Live Announcements</h2>
-      <button id="startLive"><i class="fas fa-broadcast-tower"></i> Start Live Announcement</button>
-      <button id="stopLive" disabled><i class="fas fa-stop-circle"></i> Stop Live Announcement</button>
-
+      <button id="startLive">Start Live Announcement</button>
+      <button id="stopLive" disabled>Stop Live Announcement</button>
+      <br/>
       <label for="sensitivity">Mic Sensitivity:</label>
       <input type="range" id="sensitivity" min="1" max="5" value="2" step="0.1" />
-
       <audio id="liveAudio" controls></audio>
-
       <div id="volumeMeter"><div id="volumeLevel"></div></div>
       <canvas id="waveform"></canvas>
     </section>
-
     <!-- Recorded Section -->
     <section id="recorded">
       <h2>Recorded Announcements</h2>
-      <button id="startRecord"><i class="fas fa-microphone"></i> Start Recording</button>
-      <button id="stopRecord" disabled><i class="fas fa-stop"></i> Stop Recording</button>
-      <button id="clearRecordings" style="background:#dc3545;"><i class="fas fa-trash-alt"></i> Clear All Recordings</button>
-
+      <button id="startRecord">Start Recording</button>
+      <button id="stopRecord" disabled>Stop Recording</button>
+      <button id="clearRecordings" style="background:#dc3545;">Clear All Recordings</button>
       <h3>Saved Recordings:</h3>
       <ul id="recordingList"></ul>
-
       <h3>Select Audio Output:</h3>
       <select id="audioOutputSelect"></select>
     </section>
   </div>
-
-  <!-- Footer -->
   <footer>
     &copy; 2025 Live Announcements. All rights reserved.
   </footer>
@@ -312,20 +216,16 @@
     let mediaRecorder, audioChunks = [];
     let liveStream = null;
     let recordings = JSON.parse(localStorage.getItem("recordings")) || [];
-    let audioContext, analyser, dataArray, sourceNode, gainNode;
-    let meterInterval, waveformInterval;
-
+    let audioContext, analyser, dataArray, sourceNode, gainNode, meterInterval, waveformInterval;
     const canvas = document.getElementById("waveform");
     const canvasCtx = canvas.getContext("2d");
-    const notificationEl = document.getElementById("notification");
 
-    // Show Toast Notification
+    // Toast Notification Function
+    const notificationEl = document.getElementById("notification");
     function showNotification(message, duration = 3000) {
       notificationEl.textContent = message;
       notificationEl.classList.add("show");
-      setTimeout(() => {
-        notificationEl.classList.remove("show");
-      }, duration);
+      setTimeout(() => notificationEl.classList.remove("show"), duration);
     }
 
     // Theme Toggle
@@ -333,7 +233,9 @@
     themeToggle.addEventListener("click", () => {
       document.body.classList.toggle("dark");
       document.body.classList.toggle("light");
-      themeToggle.textContent = document.body.classList.contains("dark") ? "Light Mode" : "Dark Mode";
+      themeToggle.textContent = document.body.classList.contains("dark")
+        ? "Light Mode"
+        : "Dark Mode";
     });
 
     // Tab Switching
@@ -346,7 +248,7 @@
       });
     });
 
-    // Request Mic Access
+    // Request microphone access
     async function requestMicAccess() {
       try {
         return await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -359,27 +261,27 @@
 
     // Setup Audio Visualization & Force Speaker Output
     function setupAudioVisualization(stream) {
+      // Create AudioContext and force audio output to speaker if supported
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-      // Force speaker output if supported
       if (audioContext.setSinkId) {
         audioContext.setSinkId("default")
           .then(() => console.log("Routing audio to speaker."))
           .catch(err => console.warn("Failed to set speaker output:", err));
       }
-
       sourceNode = audioContext.createMediaStreamSource(stream);
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       dataArray = new Uint8Array(analyser.frequencyBinCount);
-
       gainNode = audioContext.createGain();
+      
+      // Apply mic sensitivity from slider
       gainNode.gain.value = parseFloat(document.getElementById("sensitivity").value);
-
+      
+      // Connect the audio nodes: mic -> gain -> analyser -> speaker
       sourceNode.connect(gainNode);
       gainNode.connect(analyser);
       analyser.connect(audioContext.destination);
-
+      
       // Update volume meter every 100ms
       meterInterval = setInterval(() => {
         analyser.getByteFrequencyData(dataArray);
@@ -387,26 +289,22 @@
         const percent = Math.min(100, (average / 128) * 100);
         document.getElementById("volumeLevel").style.width = percent + "%";
       }, 100);
-
-      // Waveform drawing
+      
+      // Draw waveform every 100ms
       waveformInterval = setInterval(drawWaveform, 100);
     }
-
+    
+    // Draw Waveform on Canvas
     function drawWaveform() {
       if (!analyser) return;
       const width = canvas.width = canvas.clientWidth;
       const height = canvas.height = canvas.clientHeight;
       analyser.getByteTimeDomainData(dataArray);
-
-      // Clear canvas
       canvasCtx.fillStyle = "#eee";
       canvasCtx.fillRect(0, 0, width, height);
-
-      // Draw waveform
       canvasCtx.lineWidth = 2;
       canvasCtx.strokeStyle = "#007bff";
       canvasCtx.beginPath();
-
       const sliceWidth = width / dataArray.length;
       let x = 0;
       for (let i = 0; i < dataArray.length; i++) {
@@ -419,51 +317,52 @@
       canvasCtx.stroke();
     }
 
-    // Live Announcement
+    // Start Live Announcement with visualization & forced speaker routing
     document.getElementById("startLive").addEventListener("click", async () => {
       if (liveStream) return;
       liveStream = await requestMicAccess();
       if (liveStream) {
+        // Attach stream to audio element for UI control
         const audioElement = document.getElementById("liveAudio");
         audioElement.srcObject = liveStream;
         audioElement.play();
+        // Setup audio context and visualization
         setupAudioVisualization(liveStream);
         document.getElementById("stopLive").disabled = false;
         showNotification("Live announcement started.");
       }
     });
 
+    // Stop Live Announcement
     document.getElementById("stopLive").addEventListener("click", () => {
       if (liveStream) {
         liveStream.getTracks().forEach(track => track.stop());
         liveStream = null;
         clearInterval(meterInterval);
         clearInterval(waveformInterval);
-        document.getElementById("stopLive").disabled = true;
         showNotification("Live announcement stopped.");
+        document.getElementById("stopLive").disabled = true;
       }
     });
 
-    // Recording
+    // Recording Feature
     document.getElementById("startRecord").addEventListener("click", async () => {
       if (mediaRecorder) return;
       const stream = await requestMicAccess();
       if (stream) {
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
-
         mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
         mediaRecorder.onstop = () => {
           const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
           const audioUrl = URL.createObjectURL(audioBlob);
-          const fileName = prompt("Enter a name for your recording:", "Announcement") || "Unnamed";
+          let fileName = prompt("Enter a name for your recording:", "Announcement") || "Unnamed";
           recordings.push({ name: fileName, url: audioUrl, blob: audioBlob });
           localStorage.setItem("recordings", JSON.stringify(recordings));
           updateRecordingList();
           mediaRecorder = null;
           showNotification("Recording saved.");
         };
-
         mediaRecorder.start();
         document.getElementById("stopRecord").disabled = false;
         document.getElementById("startRecord").disabled = true;
@@ -480,7 +379,7 @@
       }
     });
 
-    // Clear Recordings
+    // Clear All Recordings
     document.getElementById("clearRecordings").addEventListener("click", () => {
       if (confirm("Are you sure you want to clear all recordings?")) {
         recordings = [];
@@ -490,7 +389,7 @@
       }
     });
 
-    // Update Recording List
+    // Update Recordings List
     function updateRecordingList() {
       const list = document.getElementById("recordingList");
       list.innerHTML = "";
@@ -498,15 +397,15 @@
         const li = document.createElement("li");
         li.innerHTML = `
           <strong>${rec.name}</strong>
-          <button onclick="playRecording(${index})"><i class="fas fa-play"></i> Play</button>
-          <button onclick="renameRecording(${index})"><i class="fas fa-edit"></i> Rename</button>
-          <button onclick="deleteRecording(${index})"><i class="fas fa-trash-alt"></i> Delete</button>
+          <button onclick="playRecording(${index})">▶ Play</button>
+          <button onclick="renameRecording(${index})">✏ Rename</button>
+          <button onclick="deleteRecording(${index})">🗑 Delete</button>
         `;
         list.appendChild(li);
       });
     }
 
-    // Play a Recording with custom audio output
+    // Play a Recording with custom audio output routing
     async function playRecording(index) {
       const selectedDeviceId = document.getElementById("audioOutputSelect").value;
       const audio = new Audio(URL.createObjectURL(recordings[index].blob));
@@ -541,7 +440,7 @@
       showNotification("Recording deleted.");
     }
 
-    // Get Audio Output Devices
+    // Get Audio Output Devices for playback
     async function getAudioOutputDevices() {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const speakers = devices.filter(device => device.kind === "audiooutput");
@@ -549,9 +448,23 @@
       select.innerHTML = speakers.map(device =>
         `<option value="${device.deviceId}">${device.label || "Unknown Output"}</option>`
       ).join("");
+      select.addEventListener("change", (event) => setAudioOutput(event.target.value));
     }
 
-    // On Load
+    async function setAudioOutput(deviceId) {
+      const audioElement = new Audio();
+      if (typeof audioElement.setSinkId !== "undefined") {
+        try {
+          await audioElement.setSinkId(deviceId);
+          console.log(`Audio output set to: ${deviceId}`);
+        } catch (err) {
+          console.error("Failed to set audio output:", err);
+        }
+      } else {
+        alert("Your browser does not support setting audio output devices.");
+      }
+    }
+
     window.onload = () => {
       updateRecordingList();
       getAudioOutputDevices();
