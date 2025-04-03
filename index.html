@@ -17,6 +17,9 @@
     <h3>Saved Recordings:</h3>
     <ul id="recordingList"></ul>
 
+    <h3>Select Audio Output:</h3>
+    <select id="audioOutputSelect"></select>
+
     <script>
         let mediaRecorder, audioChunks = [];
         let liveStream = null;
@@ -75,7 +78,7 @@
                     if (!fileName) fileName = "Unnamed";
 
                     recordings.push({ name: fileName, url: audioUrl, blob: audioBlob });
-                    localStorage.setItem("recordings", JSON.stringify(recordings.map(r => ({ name: r.name })))); // Store names only
+                    localStorage.setItem("recordings", JSON.stringify(recordings));
                     updateRecordingList();
 
                     mediaRecorder = null;
@@ -110,18 +113,54 @@
             });
         }
 
-        function playRecording(index) {
+        async function playRecording(index) {
             let audio = new Audio(URL.createObjectURL(recordings[index].blob));
+
+            if (typeof audio.setSinkId !== "undefined") {
+                let selectedDeviceId = document.getElementById("audioOutputSelect").value;
+                if (selectedDeviceId) {
+                    await audio.setSinkId(selectedDeviceId);
+                }
+            }
+
             audio.play();
         }
 
         function deleteRecording(index) {
             recordings.splice(index, 1);
-            localStorage.setItem("recordings", JSON.stringify(recordings.map(r => ({ name: r.name })))); // Store names only
+            localStorage.setItem("recordings", JSON.stringify(recordings));
             updateRecordingList();
         }
 
-        updateRecordingList();
+        // 🔹 Get and Set Audio Output Device
+        async function getAudioOutputDevices() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const speakers = devices.filter(device => device.kind === "audiooutput");
+
+            let select = document.getElementById("audioOutputSelect");
+            select.innerHTML = speakers.map(device => 
+                `<option value="${device.deviceId}">${device.label || "Unknown Output"}</option>`
+            ).join("");
+
+            select.addEventListener("change", (event) => {
+                setAudioOutput(event.target.value);
+            });
+        }
+
+        async function setAudioOutput(deviceId) {
+            let audioElement = new Audio();
+            if (typeof audioElement.setSinkId !== "undefined") {
+                await audioElement.setSinkId(deviceId);
+                console.log(`Audio output set to: ${deviceId}`);
+            } else {
+                alert("Your browser does not support setting audio output devices.");
+            }
+        }
+
+        window.onload = () => {
+            updateRecordingList();
+            getAudioOutputDevices();
+        };
     </script>
 </body>
 </html>
