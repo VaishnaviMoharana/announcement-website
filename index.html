@@ -255,9 +255,9 @@
       try {
         const constraints = { 
           audio: {
-            echoCancellation: false,
+            echoCancellation: true,
             noiseSuppression: true,
-            autoGainControl: false
+            autoGainControl: true
           }
         };
         return await navigator.mediaDevices.getUserMedia(constraints);
