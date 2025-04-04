@@ -250,14 +250,14 @@
       });
     });
 
-    // Request microphone access with echo cancellation, noise suppression, auto gain control
+    // Request microphone access with disabled echo cancellation, noise suppression, and auto gain control
     async function requestMicAccess() {
       try {
         const constraints = { 
           audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
           }
         };
         return await navigator.mediaDevices.getUserMedia(constraints);
@@ -276,26 +276,28 @@
       gainNode.gain.value = sensitivity * amplification;
     }
 
-    // Setup Audio Visualization for visualization only (without routing to speakers)
+    // Setup Audio Visualization & Force Speaker Output
     function setupAudioVisualization(stream) {
-      // Create AudioContext for visualization only
+      // Create AudioContext and force audio output to speaker if supported
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
-      // Create a MediaStreamSource from the stream (for visualization only)
+      if (audioContext.setSinkId) {
+        audioContext.setSinkId("default")
+          .then(() => console.log("Routing audio to speaker."))
+          .catch(err => console.warn("Failed to set speaker output:", err));
+      }
       sourceNode = audioContext.createMediaStreamSource(stream);
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       dataArray = new Uint8Array(analyser.frequencyBinCount);
-      
-      // Create a gain node for sensitivity & amplification
       gainNode = audioContext.createGain();
-      updateGain();
       
-      // Connect the nodes: source -> gain -> analyser
+      // Initial gain update
+      updateGain();
+
+      // Connect the audio nodes: mic -> gain -> analyser -> speaker
       sourceNode.connect(gainNode);
       gainNode.connect(analyser);
-      
-      // Do NOT connect the analyser to the destination to avoid additional playback
+      analyser.connect(audioContext.destination);
       
       // Update gain when sliders change
       document.getElementById("sensitivity").addEventListener("input", updateGain);
@@ -329,18 +331,14 @@
       for (let i = 0; i < dataArray.length; i++) {
         const v = dataArray[i] / 128.0;
         const y = (v * height) / 2;
-        if (i === 0) {
-          canvasCtx.moveTo(x, y);
-        } else {
-          canvasCtx.lineTo(x, y);
-        }
+        i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y);
         x += sliceWidth;
       }
       canvasCtx.lineTo(width, height/2);
       canvasCtx.stroke();
     }
 
-    // Start Live Announcement (playback via audio element, visualization separately)
+    // Start Live Announcement with visualization & forced speaker routing
     document.getElementById("startLive").addEventListener("click", async () => {
       if (liveStream) return;
       liveStream = await requestMicAccess();
@@ -348,7 +346,6 @@
         const audioElement = document.getElementById("liveAudio");
         audioElement.srcObject = liveStream;
         audioElement.play();
-        // Set up visualization on a separate branch (no additional output)
         setupAudioVisualization(liveStream);
         document.getElementById("stopLive").disabled = false;
         showNotification("Live announcement started.");
@@ -376,8 +373,7 @@
         audioChunks = [];
         mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
         mediaRecorder.onstop = () => {
-          // Use "audio/webm" for better compatibility
-          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
           const audioUrl = URL.createObjectURL(audioBlob);
           let fileName = prompt("Enter a name for your recording:", "Announcement") || "Unnamed";
           recordings.push({ name: fileName, url: audioUrl, blob: audioBlob });
