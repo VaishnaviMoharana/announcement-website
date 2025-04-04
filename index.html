@@ -256,8 +256,8 @@
         const constraints = { 
           audio: {
             echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
+            noiseSuppression: false,
+            autoGainControl: false
           }
         };
         return await navigator.mediaDevices.getUserMedia(constraints);
@@ -273,7 +273,7 @@
       if (!gainNode) return;
       const sensitivity = parseFloat(document.getElementById("sensitivity").value);
       const amplification = parseFloat(document.getElementById("amplification").value);
-      gainNode.gain.value = Math.max(0.5, sensitivity * amplification * 0.8);
+      gainNode.gain.value = sensitivity * amplification;
     }
 
     // Setup Audio Visualization & Force Speaker Output
