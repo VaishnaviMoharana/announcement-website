@@ -250,7 +250,7 @@
       });
     });
 
-    // Request microphone access with disabled echo cancellation, noise suppression, and auto gain control
+    // Request microphone access with echo cancellation, noise suppression, auto gain control
     async function requestMicAccess() {
       try {
         const constraints = { 
@@ -276,28 +276,27 @@
       gainNode.gain.value = sensitivity * amplification;
     }
 
-    // Setup Audio Visualization & Force Speaker Output
+    // Setup Audio Visualization for visualization only (without routing to speakers)
     function setupAudioVisualization(stream) {
-      // Create AudioContext and force audio output to speaker if supported
+      // Create AudioContext for visualization
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioContext.setSinkId) {
-        audioContext.setSinkId("default")
-          .then(() => console.log("Routing audio to speaker."))
-          .catch(err => console.warn("Failed to set speaker output:", err));
-      }
+      
+      // Create a MediaStreamSource from the stream (for visualization only)
       sourceNode = audioContext.createMediaStreamSource(stream);
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       dataArray = new Uint8Array(analyser.frequencyBinCount);
-      gainNode = audioContext.createGain();
       
-      // Initial gain update
+      // Create a gain node for sensitivity & amplification
+      gainNode = audioContext.createGain();
       updateGain();
-
-      // Connect the audio nodes: mic -> gain -> analyser -> speaker
+      
+      // Connect the nodes: source -> gain -> analyser
       sourceNode.connect(gainNode);
       gainNode.connect(analyser);
-      analyser.connect(audioContext.destination);
+      
+      // Do NOT connect the analyser to the destination to avoid additional playback,
+      // because live playback is already handled by the audio element.
       
       // Update gain when sliders change
       document.getElementById("sensitivity").addEventListener("input", updateGain);
@@ -331,21 +330,27 @@
       for (let i = 0; i < dataArray.length; i++) {
         const v = dataArray[i] / 128.0;
         const y = (v * height) / 2;
-        i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y);
+        if (i === 0) {
+          canvasCtx.moveTo(x, y);
+        } else {
+          canvasCtx.lineTo(x, y);
+        }
         x += sliceWidth;
       }
       canvasCtx.lineTo(width, height/2);
       canvasCtx.stroke();
     }
 
-    // Start Live Announcement with visualization & forced speaker routing
+    // Start Live Announcement
     document.getElementById("startLive").addEventListener("click", async () => {
       if (liveStream) return;
       liveStream = await requestMicAccess();
       if (liveStream) {
+        // Set up live playback using the audio element only.
         const audioElement = document.getElementById("liveAudio");
         audioElement.srcObject = liveStream;
         audioElement.play();
+        // Set up visualization on a separate branch (no additional output)
         setupAudioVisualization(liveStream);
         document.getElementById("stopLive").disabled = false;
         showNotification("Live announcement started.");
