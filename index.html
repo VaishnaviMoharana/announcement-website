@@ -288,206 +288,130 @@
       sourceNode = audioContext.createMediaStreamSource(stream);
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
+      sourceNode.connect(analyser);
       dataArray = new Uint8Array(analyser.frequencyBinCount);
+
       gainNode = audioContext.createGain();
-      
-      // Initial gain update
-      updateGain();
-
-      // Connect the audio nodes: mic -> gain -> analyser -> speaker
       sourceNode.connect(gainNode);
-      gainNode.connect(analyser);
-      analyser.connect(audioContext.destination);
-      
-      // Update gain when sliders change
-      document.getElementById("sensitivity").addEventListener("input", updateGain);
-      document.getElementById("amplification").addEventListener("input", updateGain);
-      
-      // Update volume meter every 100ms
-      meterInterval = setInterval(() => {
-        analyser.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-        const percent = Math.min(100, (average / 128) * 100);
-        document.getElementById("volumeLevel").style.width = percent + "%";
-      }, 100);
-      
-      // Draw waveform every 100ms
+      gainNode.connect(audioContext.destination);
+
       waveformInterval = setInterval(drawWaveform, 100);
+      meterInterval = setInterval(updateMeter, 100);
     }
-    
-    // Draw Waveform on Canvas
+
+    // Draw waveform visualization
     function drawWaveform() {
-      if (!analyser) return;
-      const width = canvas.width = canvas.clientWidth;
-      const height = canvas.height = canvas.clientHeight;
-      analyser.getByteTimeDomainData(dataArray);
-      canvasCtx.fillStyle = "#eee";
-      canvasCtx.fillRect(0, 0, width, height);
-      canvasCtx.lineWidth = 2;
-      canvasCtx.strokeStyle = "#007bff";
-      canvasCtx.beginPath();
-      const sliceWidth = width / dataArray.length;
-      let x = 0;
+      analyser.getByteFrequencyData(dataArray);
+      canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+      canvasCtx.fillStyle = "#007bff";
+      const barWidth = canvas.width / dataArray.length;
       for (let i = 0; i < dataArray.length; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = (v * height) / 2;
-        i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y);
-        x += sliceWidth;
+        const barHeight = dataArray[i] / 2;
+        canvasCtx.fillRect(i * barWidth, canvas.height - barHeight, barWidth, barHeight);
       }
-      canvasCtx.lineTo(width, height/2);
-      canvasCtx.stroke();
     }
 
-    // Start Live Announcement with visualization & forced speaker routing
+    // Update volume meter
+    function updateMeter() {
+      const volume = analyser.getByteFrequencyData(dataArray);
+      const average = volume.reduce((a, b) => a + b, 0) / volume.length;
+      document.getElementById("volumeLevel").style.width = `${average}%`;
+    }
+
+    // Start/Stop Live Announcement
     document.getElementById("startLive").addEventListener("click", async () => {
-      if (liveStream) return;
       liveStream = await requestMicAccess();
-      if (liveStream) {
-        const audioElement = document.getElementById("liveAudio");
-        audioElement.srcObject = liveStream;
-        audioElement.play();
-        setupAudioVisualization(liveStream);
-        document.getElementById("stopLive").disabled = false;
-        showNotification("Live announcement started.");
-      }
+      if (!liveStream) return;
+
+      document.getElementById("stopLive").disabled = false;
+      document.getElementById("startLive").disabled = true;
+      setupAudioVisualization(liveStream);
+
+      // Create and play live audio
+      const liveAudio = document.getElementById("liveAudio");
+      liveAudio.srcObject = liveStream;
+      liveAudio.play();
+      showNotification("Live Announcement Started!");
     });
 
-    // Stop Live Announcement
     document.getElementById("stopLive").addEventListener("click", () => {
-      if (liveStream) {
-        liveStream.getTracks().forEach(track => track.stop());
-        liveStream = null;
-        clearInterval(meterInterval);
-        clearInterval(waveformInterval);
-        showNotification("Live announcement stopped.");
-        document.getElementById("stopLive").disabled = true;
-      }
+      clearInterval(waveformInterval);
+      clearInterval(meterInterval);
+      liveStream.getTracks().forEach(track => track.stop());
+      document.getElementById("stopLive").disabled = true;
+      document.getElementById("startLive").disabled = false;
+      showNotification("Live Announcement Stopped.");
     });
 
-    // Recording Feature
-    document.getElementById("startRecord").addEventListener("click", async () => {
-      if (mediaRecorder) return;
-      const stream = await requestMicAccess();
-      if (stream) {
+    // Start/Stop Recording
+    document.getElementById("startRecord").addEventListener("click", () => {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
         mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
         mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
         mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
-          const audioUrl = URL.createObjectURL(audioBlob);
-          let fileName = prompt("Enter a name for your recording:", "Announcement") || "Unnamed";
-          recordings.push({ name: fileName, url: audioUrl, blob: audioBlob });
-          localStorage.setItem("recordings", JSON.stringify(recordings));
-          updateRecordingList();
-          mediaRecorder = null;
-          showNotification("Recording saved.");
+          const blob = new Blob(audioChunks, { type: "audio/wav" });
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          audio.onloadeddata = () => {
+            const recording = { url, audio };
+            recordings.push(recording);
+            localStorage.setItem("recordings", JSON.stringify(recordings));
+            renderRecordingList();
+            audioChunks = [];
+          };
         };
         mediaRecorder.start();
         document.getElementById("stopRecord").disabled = false;
         document.getElementById("startRecord").disabled = true;
-        showNotification("Recording started.");
-      }
+        showNotification("Recording Started.");
+      });
     });
 
     document.getElementById("stopRecord").addEventListener("click", () => {
-      if (mediaRecorder) {
-        mediaRecorder.stop();
-        document.getElementById("stopRecord").disabled = true;
-        document.getElementById("startRecord").disabled = false;
-        showNotification("Recording stopped.");
-      }
+      mediaRecorder.stop();
+      document.getElementById("stopRecord").disabled = true;
+      document.getElementById("startRecord").disabled = false;
+      showNotification("Recording Stopped.");
     });
 
     // Clear All Recordings
     document.getElementById("clearRecordings").addEventListener("click", () => {
-      if (confirm("Are you sure you want to clear all recordings?")) {
-        recordings = [];
-        localStorage.removeItem("recordings");
-        updateRecordingList();
-        showNotification("All recordings cleared.");
-      }
+      recordings = [];
+      localStorage.removeItem("recordings");
+      renderRecordingList();
+      showNotification("All recordings cleared.");
     });
 
-    // Update Recordings List
-    function updateRecordingList() {
-      const list = document.getElementById("recordingList");
-      list.innerHTML = "";
-      recordings.forEach((rec, index) => {
+    // Render Recorded Audio List
+    function renderRecordingList() {
+      const recordingList = document.getElementById("recordingList");
+      recordingList.innerHTML = "";
+      recordings.forEach((recording, index) => {
         const li = document.createElement("li");
         li.innerHTML = `
-          <strong>${rec.name}</strong>
-          <button onclick="playRecording(${index})">▶ Play</button>
-          <button onclick="renameRecording(${index})">✏ Rename</button>
-          <button onclick="deleteRecording(${index})">🗑 Delete</button>
+          <strong>Recording ${index + 1}</strong>
+          <button onclick="playRecording(${index})">Play</button>
+          <button onclick="deleteRecording(${index})">Delete</button>
         `;
-        list.appendChild(li);
+        recordingList.appendChild(li);
       });
     }
 
-    // Play a Recording with custom audio output routing
-    async function playRecording(index) {
-      const selectedDeviceId = document.getElementById("audioOutputSelect").value;
-      const audio = new Audio(URL.createObjectURL(recordings[index].blob));
-      if (typeof audio.setSinkId !== "undefined" && selectedDeviceId) {
-        try {
-          await audio.setSinkId(selectedDeviceId);
-          console.log(`Playing on device: ${selectedDeviceId}`);
-        } catch (err) {
-          console.error("Error setting audio output:", err);
-          alert("Your browser does not support changing audio output.");
-        }
-      }
-      audio.play();
+    // Play a recorded audio
+    function playRecording(index) {
+      const recording = recordings[index];
+      recording.audio.play();
     }
 
-    // Rename a Recording
-    function renameRecording(index) {
-      const newName = prompt("Enter a new name for this recording:", recordings[index].name);
-      if (newName) {
-        recordings[index].name = newName;
-        localStorage.setItem("recordings", JSON.stringify(recordings));
-        updateRecordingList();
-        showNotification("Recording renamed.");
-      }
-    }
-
-    // Delete a Recording
+    // Delete a recorded audio
     function deleteRecording(index) {
       recordings.splice(index, 1);
       localStorage.setItem("recordings", JSON.stringify(recordings));
-      updateRecordingList();
-      showNotification("Recording deleted.");
+      renderRecordingList();
+      showNotification(`Recording ${index + 1} deleted.`);
     }
 
-    // Get Audio Output Devices for playback
-    async function getAudioOutputDevices() {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const speakers = devices.filter(device => device.kind === "audiooutput");
-      const select = document.getElementById("audioOutputSelect");
-      select.innerHTML = speakers.map(device =>
-        `<option value="${device.deviceId}">${device.label || "Unknown Output"}</option>`
-      ).join("");
-      select.addEventListener("change", (event) => setAudioOutput(event.target.value));
-    }
-
-    async function setAudioOutput(deviceId) {
-      const audioElement = new Audio();
-      if (typeof audioElement.setSinkId !== "undefined") {
-        try {
-          await audioElement.setSinkId(deviceId);
-          console.log(`Audio output set to: ${deviceId}`);
-        } catch (err) {
-          console.error("Failed to set audio output:", err);
-        }
-      } else {
-        alert("Your browser does not support setting audio output devices.");
-      }
-    }
-
-    window.onload = () => {
-      updateRecordingList();
-      getAudioOutputDevices();
-    };
+    renderRecordingList();  // Initial render of saved recordings
   </script>
 </body>
 </html>
